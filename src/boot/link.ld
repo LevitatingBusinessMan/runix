@@ -8,10 +8,12 @@ ld -n -o kernel.bin -T link.ld multiboot_header.o boot.o
 ENTRY(start)
 
 SECTIONS {
-	/* Avoid the first megabyte */
+	/* Skip the first megabyte */
 	. = 1M;
 
     .boot : { *(.multiboot_header) }
+
+	.data : { *(.data) }
 
     .text : { *(.text) }
 
