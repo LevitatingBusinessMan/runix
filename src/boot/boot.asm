@@ -106,8 +106,46 @@ start:
 ; nc          No CPUID
 ; nl          No long mode
 
+; Using huge pages is too easy of course
+; We use 1/4 of a PDPT (128 PDP entries), so we have 256MiB of memory
+.setup_tables:
+    mov eax, PML4T      ; Get address of PML4T (only 52 bits used as address)
+    add eax, 0x1000     ; PDPT is 4096 bytes further
+    or eax, 0b11        ; Set the first 2 bits, present and writable
+    mov [PML4T], eax    ; Set the first entry of PML4T to our only PDPT
+
+    mov ecx, 128        ; PDPT's to make
+    mov edx, 512        ; PDP's to make per PDPT
+
+    ; EAX is currently the address of the PDPT
+    
+    mov ebx, eax        ; copy EAX
+    add ebx, 0x1000     ; Adress of the first PDP
+    add ebx, 0b11       ; Set first 2 bits
+
+.setup_table_pdpt:
+    mov dword [eax], ebx    ; Set value of next PDP 
+    add ebx, 0x200000       ; Add size of a PDP to get address of next PDP
+    add eax, 8              ; Adress of next entry
+    mov edi, ebx            ; Copy value of this PDP
+.setup_table_pdp:
+    mov dword [ebx], edi    ; Set value of the PT
+    add edi, 0x1000         ; Address of next PT
+    add ebx, 8              ; Adress of next entry
+    dec edx
+    jnz .setup_table_pdp
+    loop .setup_table_pdpt
+    ret
+
 section .bss
 align 4096 ; align to a page size
+PML4T:
+    ; 1 PML4T
+    ; 128 PDPT
+    ; 512 PDP
+    ; 512 PT
+    resb 1 * 128 * 512 * 512 * 8
+
 stack_bottom:
     ; Reserve 64 bytes for the stack
     resb 64
