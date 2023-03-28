@@ -13,7 +13,7 @@ SECTIONS {
 
     .boot : { *(.multiboot_header) }
 
-	.data : { *(.data) }
+    .data : { *(.data) }
 
     .text : { *(.text) }
 

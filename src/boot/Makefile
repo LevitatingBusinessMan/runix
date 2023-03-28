@@ -17,3 +17,5 @@ clean:
 run:
 	qemu-system-x86_64 -cdrom runix.iso
 
+debug:
+	qemu-system-x86_64 -cdrom runix.iso -s -S

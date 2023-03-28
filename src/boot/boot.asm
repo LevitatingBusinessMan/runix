@@ -21,8 +21,12 @@ start:
     call .check_longmode
     ; A20 should probably be enabled here?
 
+    call .setup_tables
+    call .enable_paging
+
     ; print `OK` to screen
     mov dword [VGA], OK
+
     hlt
 
 ; Confirm if booted via multiboot
@@ -114,37 +118,65 @@ start:
     or eax, 0b11        ; Set the first 2 bits, present and writable
     mov [PML4T], eax    ; Set the first entry of PML4T to our only PDPT
 
-    mov ecx, 128        ; PDPT's to make
-    mov edx, 512        ; PDP's to make per PDPT
+    mov ecx, 128        ; PDP's to make
+    mov edx, 512        ; PT's to make per PDP
 
     ; EAX is currently the address of the PDPT
     
     mov ebx, eax        ; copy EAX
     add ebx, 0x1000     ; Adress of the first PDP
-    add ebx, 0b11       ; Set first 2 bits
+    or ebx, 0b11        ; Set first 2 bits
 
-.setup_table_pdpt:
-    mov dword [eax], ebx    ; Set value of next PDP 
-    add ebx, 0x200000       ; Add size of a PDP to get address of next PDP
-    add eax, 8              ; Adress of next entry
-    mov edi, ebx            ; Copy value of this PDP
+    ; EAX tracks the current slot in the PDPT
+    ; EBX tracks the current slot in the PDP
+
 .setup_table_pdp:
-    mov dword [ebx], edi    ; Set value of the PT
+    mov edi, ebx            ; Copy address of this PDP
+    mov dword [eax], ebx    ; Set address of this PDP IN PDPT
+    add ebx, 0x1200         ; Add size of a PDP (512 PT's and itself) to get address of next PDP
+    add eax, 8              ; Adress of next slot in PDPT
+    mov edx, 512            ; PT's to make
+
+.setup_table_pt:
+    mov dword [ebx], edi    ; Set address of this PT in PDP
     add edi, 0x1000         ; Address of next PT
-    add ebx, 8              ; Adress of next entry
+    add ebx, 8              ; Adress of next slot in PDP
     dec edx
-    jnz .setup_table_pdp
-    loop .setup_table_pdpt
+    jnz .setup_table_pt
+    loop .setup_table_pdp
+    ret
+
+.enable_paging:
+    ; Enable PAE (bit 5 of cr4)
+    mov eax, cr4
+    or eax, 1 << 5
+    mov cr4, eax
+
+    ; Set LME (Long Mode Enable) (bit 8 of EFER MSR)
+    mov ecx, 0xC0000080 ; EFER MSR
+    rdmsr
+    or eax, 1 << 8
+    wrmsr
+    
+    ; Save PML4T table to CR3
+    mov eax, PML4T
+    mov cr3, eax
+
+    ; Enable PG (Paging) (bit 31 of cr0)
+    mov eax, cr0
+    or eax, 1 << 31
+    mov cr0, eax
+
     ret
 
 section .bss
 align 4096 ; align to a page size
 PML4T:
     ; 1 PML4T
-    ; 128 PDPT
-    ; 512 PDP
+    ; 1 PDPT
+    ; 128 PDP
     ; 512 PT
-    resb 1 * 128 * 512 * 512 * 8
+    resb 1 * 1 * 128 * 512 * 8
 
 stack_bottom:
     ; Reserve 64 bytes for the stack
