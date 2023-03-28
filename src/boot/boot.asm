@@ -133,8 +133,9 @@ start:
 .setup_table_pdp:
     mov edi, ebx            ; Copy address of this PDP
     mov dword [eax], ebx    ; Set address of this PDP IN PDPT
-    add ebx, 0x1200         ; Add size of a PDP (512 PT's and itself) to get address of next PDP
+    add ebx, 0x201000       ; Add size of a PDP (512 PT's and itself) to get address of next PDP
     add eax, 8              ; Adress of next slot in PDPT
+    add edi, 0x1000         ; Address of first PT
     mov edx, 512            ; PT's to make
 
 .setup_table_pt:
