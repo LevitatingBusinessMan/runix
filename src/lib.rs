@@ -26,11 +26,6 @@ pub extern fn runix(multiboot_information_pointer: *const BootInformationHeader)
 
     let memory_map_tag = boot_info.memory_map_tag()
         .expect("Memory map tag required");
-    
-    println!("memory areas:");
-    for area in memory_map_tag.memory_areas() {
-        println!("    start: 0x{:x}, length: 0x{:x}", area.start_address(), area.size());
-    }
 
     let elf_sections_tag = boot_info.elf_sections()
     .expect("Elf-sections tag required");
@@ -47,9 +42,14 @@ pub extern fn runix(multiboot_information_pointer: *const BootInformationHeader)
     let multiboot_start = multiboot_information_pointer as u32;
     let multiboot_end = multiboot_start + (boot_info.total_size() as u32);
 
+    println!("Kernel    at {:#7x} - {:#7x}", kernel_start, kernel_end);
+    println!("Multiboot at {:#7x} - {:#7x}", multiboot_start, multiboot_end);
+    
     println!();
-    println!("Kernel    :0x{:x} - 0x{:x}", kernel_start, kernel_end);
-    println!("Multiboot :0x{:x} - 0x{:x}", multiboot_start, multiboot_end);
+    println!("Memory areas:");
+    for area in memory_map_tag.memory_areas() {
+        println!("    start: {:#13x}, length:{:#13x}", area.start_address(), area.size());
+    }
 
     loop{}
 }
