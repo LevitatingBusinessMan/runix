@@ -10,8 +10,8 @@ gdt:
 
 section .text
 bits 32
-OK equ 0xF04BF04F  ; black on white OK
-VGA equ 0xb8000
+OK equ 0xF04BF04F     ; black on white OK
+VGA equ 0xb8000 + 160 ; start on next line
 start:
 
     ; At this point multiboot should've set EAX to ‘0x36d76289’;
@@ -20,8 +20,6 @@ start:
 
     ; Set the stack pointer
     mov esp, stack_top
-
-    ;mov word [VGA-2], 0x0020
 
     call .confirm_multiboot
     call .check_cpuid
