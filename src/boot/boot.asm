@@ -115,7 +115,7 @@ start:
 ; https://os.phil-opp.com/entering-longmode/#paging
 ; https://wiki.osdev.org/Setting_Up_Paging
 
-; I use a single PDP with 64 slots filled loading to huge 2MiB pages
+; I use a single PDP with 64 slots filled pointing to huge 2MiB pages
 ; to achieve 128MiB memory.
 .setup_tables:
     mov eax, PDPT
