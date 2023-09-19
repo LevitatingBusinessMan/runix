@@ -1,4 +1,10 @@
-# Building
+# Welcome page
+![](screenshots/welcome_to_runix.png)
+
+# Red screen of death
+![](screenshots/panic.png)
+
+# Building and running
 ```
 $ make
 $ make run
