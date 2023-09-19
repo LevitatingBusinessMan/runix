@@ -2,7 +2,7 @@
 ![](screenshots/welcome_to_runix.png)
 
 # Red screen of death
-![](screenshots/panic.png)
+![](screenshots/red_screen_of_death.png)
 
 # Building and running
 ```
