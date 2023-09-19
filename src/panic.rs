@@ -1,6 +1,15 @@
 use core::panic::PanicInfo;
+use core::fmt::Write;
+use crate::vga;
 
 #[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
-	loop {}
+fn panic(info: &PanicInfo) -> ! {
+	vga::fill(vga::Color::Red);
+	let msg = "PANIC";
+	vga::print_at(vga::BUFFER_WIDTH / 2 - msg.len()/2, 12, msg.as_bytes(), vga::Color::White, vga::Color::Red);
+	let mut printer = vga::ColoredPrinter::new(0,vga::BUFFER_HEIGHT-1,vga::Color::White, vga::Color::Red);
+	if let Some(msg) = info.message() {
+		core::fmt::write(&mut printer, *msg).unwrap();
+	}
+	loop {};
 }
