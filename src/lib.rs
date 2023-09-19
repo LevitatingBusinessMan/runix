@@ -3,7 +3,7 @@
 #![feature(const_mut_refs)]
 #![feature(panic_info_message)]
 
-use core::arch::asm;
+use core::{arch::asm, f32::consts::E};
 
 use vga::Color;
 mod panic;
@@ -31,6 +31,25 @@ pub extern fn runix(multiboot_information_pointer: *const BootInformationHeader)
     for area in memory_map_tag.memory_areas() {
         println!("    start: 0x{:x}, length: 0x{:x}", area.start_address(), area.size());
     }
+
+    let elf_sections_tag = boot_info.elf_sections()
+    .expect("Elf-sections tag required");
+
+    // println!("kernel sections:");
+    // for section in elf_sections_tag.clone() {
+    //     println!("    addr: 0x{:x}, size: 0x{:x}, flags: 0x{:x}",
+    //         section.start_address(), section.size(), section.flags());
+    // }
+
+    let kernel_start = elf_sections_tag.clone().map(|s| s.start_address()).min().unwrap();
+    let kernel_end = elf_sections_tag.clone().map(|s| s.start_address() + s.size()).max().unwrap();
+    
+    let multiboot_start = multiboot_information_pointer as u32;
+    let multiboot_end = multiboot_start + (boot_info.total_size() as u32);
+
+    println!();
+    println!("Kernel    :0x{:x} - 0x{:x}", kernel_start, kernel_end);
+    println!("Multiboot :0x{:x} - 0x{:x}", multiboot_start, multiboot_end);
 
     loop{}
 }

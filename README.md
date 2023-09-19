@@ -1,5 +1,5 @@
 # Welcome page
-![](screenshots/welcome_to_runix.png)
+![](screenshots/welcome_to_runix2.png)
 
 # Red screen of death
 ![](screenshots/red_screen_of_death.png)
