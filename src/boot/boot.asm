@@ -114,7 +114,6 @@ start:
 ; https://en.wikipedia.org/wiki/X86-64#Virtual_address_space_details
 ; https://os.phil-opp.com/entering-longmode/#paging
 ; https://wiki.osdev.org/Setting_Up_Paging
-; Using huge pages is too easy of course
 
 ; I use a single PDP with 64 slots filled loading to huge 2MiB pages
 ; to achieve 128MiB memory.
@@ -131,12 +130,13 @@ start:
     mov ebx, 0
 
     ; EAX is our PDP
+    ; EBX is location of page
     ; ECX is slots to fill
-    ; EDX is location of page
 
 .setup_table_pdp:
-    mov eax, ebx            ; Copy PT address to PDP slot
-    or eax, 0b10000011      ; Set flags (huge + writabe + presnet)
+    mov edx, ebx            ; Copy PT address to PDP slot
+    or edx, 0b10000011      ; Set flags (huge + writabe + presnet)
+    mov [eax], edx          ; Save page address to slot
     add eax, 8              ; Next slot
     add ebx, 0x200000
     loop .setup_table_pdp
@@ -166,6 +166,7 @@ start:
 
     ret
 
+; Will be initialized to 0
 section .bss
 align 4096 ; align to a page size
 PML4T:
