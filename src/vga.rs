@@ -13,9 +13,14 @@ macro_rules! println {
 #[macro_export]
 macro_rules! print {
     ($($arg:tt)*) => {{
-        use core::fmt::Write;
-        $crate::vga::PRINTER.lock().write_fmt(format_args!($($arg)*)).unwrap();
+        $crate::vga::print_args(format_args!($($arg)*));
     }};
+}
+
+// Helper function for the `print` macro to prevent deadlocks
+pub fn print_args(args: fmt::Arguments) {
+    use core::fmt::Write;
+    PRINTER.lock().write_fmt(args).unwrap();
 }
 
 pub const BUFFER_WIDTH: usize = 80;
@@ -75,6 +80,10 @@ impl Printer {
             color:(fg,bg).into(),
             character,
         };
+        if self.column == BUFFER_WIDTH {
+            self.column = 0;
+            self.row += 1;
+        }
         // Write the word
         unsafe {(*VGA)[self.row][self.column].write(sc);};
         self.column += 1;

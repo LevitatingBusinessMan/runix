@@ -16,7 +16,7 @@ static WELCOME_STRING :&'static str = "Welcome to Runix!";
 // https://en.wikipedia.org/wiki/VGA_text_mode
 pub extern fn _start() -> ! {
 
-    vga::fill(Color::White);
+    //vga::fill(Color::White);
     vga::print_at(vga::BUFFER_WIDTH/2 - WELCOME_STRING.len()/2, 12, WELCOME_STRING.as_bytes(), Color::Black, Color::White);
 
     loop{}
