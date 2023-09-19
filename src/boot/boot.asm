@@ -110,41 +110,37 @@ start:
 ; nc          No CPUID
 ; nl          No long mode
 
+
+; https://en.wikipedia.org/wiki/X86-64#Virtual_address_space_details
+; https://os.phil-opp.com/entering-longmode/#paging
+; https://wiki.osdev.org/Setting_Up_Paging
 ; Using huge pages is too easy of course
-; We use 1/4 of a PDPT (128 PDP entries), so we have 256MiB of memory
+
+; I use a single PDP with 64 slots filled loading to huge 2MiB pages
+; to achieve 128MiB memory.
 .setup_tables:
-    mov eax, PML4T      ; Get address of PML4T (only 52 bits used as address)
-    add eax, 0x1000     ; PDPT is 4096 bytes further
-    or eax, 0b11        ; Set the first 2 bits, present and writable
-    mov [PML4T], eax    ; Set the first entry of PML4T to our only PDPT
+    mov eax, PDPT
+    or eax, 0b11        ; Set present and writable
+    mov [PML4T], eax    ; Save only PDPT in PM4LT
 
-    mov ecx, 128        ; PDP's to make
-    mov edx, 512        ; PT's to make per PDP
+    mov eax, PDP
+    or eax, 0b11        ; Set present and writable
+    mov [PDPT], eax     ; Save only PDP in PDPT
 
-    ; EAX is currently the address of the PDPT
-    
-    mov ebx, eax        ; copy EAX
-    add ebx, 0x1000     ; Adress of the first PDP
-    or ebx, 0b11        ; Set first 2 bits
+    mov ecx, 64
+    mov ebx, 0
 
-    ; EAX tracks the current slot in the PDPT
-    ; EBX tracks the current slot in the PDP
+    ; EAX is our PDP
+    ; ECX is slots to fill
+    ; EDX is location of page
 
 .setup_table_pdp:
-    mov edi, ebx            ; Copy address of this PDP
-    mov dword [eax], ebx    ; Set address of this PDP IN PDPT
-    add ebx, 0x201000       ; Add size of a PDP (512 PT's and itself) to get address of next PDP
-    add eax, 8              ; Adress of next slot in PDPT
-    add edi, 0x1000         ; Address of first PT
-    mov edx, 512            ; PT's to make
-
-.setup_table_pt:
-    mov dword [ebx], edi    ; Set address of this PT in PDP
-    add edi, 0x1000         ; Address of next PT
-    add ebx, 8              ; Adress of next slot in PDP
-    dec edx
-    jnz .setup_table_pt
+    mov eax, ebx            ; Copy PT address to PDP slot
+    or eax, 0b10000011      ; Set flags (huge + writabe + presnet)
+    add eax, 8              ; Next slot
+    add ebx, 0x200000
     loop .setup_table_pdp
+
     ret
 
 .enable_paging:
@@ -158,7 +154,7 @@ start:
     rdmsr
     or eax, 1 << 8
     wrmsr
-    
+
     ; Save PML4T table to CR3
     mov eax, PML4T
     mov cr3, eax
@@ -173,11 +169,11 @@ start:
 section .bss
 align 4096 ; align to a page size
 PML4T:
-    ; 1 PML4T
-    ; 1 PDPT
-    ; 128 PDP
-    ; 512 PT
-    resb 1 * 1 * 128 * 512 * 8
+    resb 4096
+PDPT:
+    resb 4096
+PDP:
+    resb 4096
 
 stack_bottom:
     ; Reserve 64 bytes for the stack
