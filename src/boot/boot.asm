@@ -180,6 +180,16 @@ section .text
 bits 64
 OKAY equ 0xF059F041F04BF04F
 long_mode:
+
+    ; To avoid issues with niche instructions
+    ; nullify all segment registers except cs
+    mov ax, 0
+    mov ss, ax
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+
     ; print `OKAY` to screen
     mov rax, OKAY
     mov qword [VGA], rax

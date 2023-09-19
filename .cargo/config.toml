@@ -1,0 +1,7 @@
+[unstable]
+build-std = ["core", "compiler_builtins"]
+# https://github.com/rust-lang/compiler-builtins/blob/eff506cd49b637f1ab5931625a33cef7e91fbbf6/Cargo.toml#L54-L55
+build-std-features = ["compiler-builtins-mem"]
+
+[build]
+target = "x86-runix.json"

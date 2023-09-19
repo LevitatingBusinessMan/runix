@@ -3,6 +3,6 @@
 mod panic;
 
 #[no_mangle]
-pub extern "C" fn _start() -> ! {
+pub extern fn _start() -> ! {
     loop {}
 }
