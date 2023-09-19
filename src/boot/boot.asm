@@ -190,11 +190,10 @@ long_mode:
     mov fs, ax
     mov gs, ax
 
-    ; print `OKAY` to screen
-    mov rax, OKAY
-    mov qword [VGA], rax
-    hlt
-
+    ; Call rust
+    extern _start
+    call _start
+    
 ; Will be initialized to 0
 section .bss
 align 4096 ; align to a page size
