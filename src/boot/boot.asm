@@ -1,11 +1,16 @@
 global start
 
-section .data
-    ;ERR db 0x4f524f45, 0x4f3a4f52, 0x4f204f20
+section .rodata
+gdt:
+    dq 0;                                   ; All GDT's start with a 0 entry
+    dq (1<<43) | (1<<44) | (1<<47) | (1<<53); 64 bit ring 0 segment entry
+.pointer:
+    dw $ - gdt - 1                          ; SIZE of GDT
+    dd gdt                                  ; Address of GDT
 
 section .text
 bits 32
-OK equ 0xF04BF04F ; black on white
+OK equ 0xF04BF04F  ; black on white OK
 VGA equ 0xb8000
 start:
 
@@ -16,18 +21,21 @@ start:
     ; Set the stack pointer
     mov esp, stack_top
 
+    ;mov word [VGA-2], 0x0020
+
     call .confirm_multiboot
     call .check_cpuid
     call .check_longmode
     ; A20 should probably be enabled here?
 
+    ; Setup paging
     call .setup_tables
     call .enable_paging
 
-    ; print `OK` to screen
-    mov dword [VGA], OK
+    ; Load GDT
+    lgdt [gdt.pointer]
 
-    hlt
+    jmp 8:long_mode
 
 ; Confirm if booted via multiboot
 .confirm_multiboot:
@@ -90,12 +98,13 @@ start:
     mov ax, "nl"
     jne .error
 
+; https://en.wikipedia.org/wiki/VGA_text_mode
 ; This will print ERR: to the screen
 ; followed by the error code.
 ; Parameters:
 ; error code in ax
 .error:
-    ; VGA reads every two words from right to left
+    ; Remember endianness
     mov dword [VGA],     0xF452F445     ; ER
     mov dword [VGA + 4], 0xF43AF452     ; R:
     mov word  [VGA + 8], 0xF420         ; a space
@@ -166,6 +175,15 @@ start:
     mov cr0, eax
 
     ret
+
+section .text
+bits 64
+OKAY equ 0xF059F041F04BF04F
+long_mode:
+    ; print `OKAY` to screen
+    mov rax, OKAY
+    mov qword [VGA], rax
+    hlt
 
 ; Will be initialized to 0
 section .bss
