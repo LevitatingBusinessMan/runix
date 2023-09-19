@@ -128,16 +128,17 @@ start:
 
     mov ecx, 64
     mov ebx, 0
+    mov edx, 0
 
-    ; EAX is our PDP
     ; EBX is location of page
     ; ECX is slots to fill
+    ; EDX is current offset from PDP
 
 .setup_table_pdp:
-    mov edx, ebx            ; Copy PT address to PDP slot
-    or edx, 0b10000011      ; Set flags (huge + writabe + presnet)
-    mov [eax], edx          ; Save page address to slot
-    add eax, 8              ; Next slot
+    mov eax, ebx            ; Copy PT address to PDP slot
+    or eax, 0b10000011      ; Set flags (huge + writabe + presnet)
+    mov [PDP + edx], eax    ; Save page address to slot
+    add edx, 8              ; Next slot
     add ebx, 0x200000
     loop .setup_table_pdp
 
