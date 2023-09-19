@@ -21,6 +21,10 @@ start:
     ; Set the stack pointer
     mov esp, stack_top
 
+    ; Save multiboot information
+    mov [boot_info], ebx
+
+    call .disable_cursor
     call .confirm_multiboot
     call .check_cpuid
     call .check_longmode
@@ -34,6 +38,20 @@ start:
     lgdt [gdt.pointer]
 
     jmp 8:long_mode
+
+.disable_cursor:
+    ; save eax for multiboot magic
+    push eax
+    mov dx, 0x3D4
+	mov al, 0xA
+	out dx, al
+
+    inc dx
+    mov al, 0x20 ; bit 0-4 is cursor shape, bit 5 disables it
+    out dx, al
+    pop eax
+
+    ret
 
 ; Confirm if booted via multiboot
 .confirm_multiboot:
@@ -189,8 +207,9 @@ long_mode:
     mov gs, ax
 
     ; Call rust
-    extern _start
-    call _start
+    mov rdi, [boot_info]
+    extern runix
+    call runix
     
 ; Will be initialized to 0
 section .bss
@@ -202,7 +221,9 @@ PDPT:
 PDP:
     resb 4096
 
+; Pointer to multiboot information
+boot_info:
+    resb 32
 stack_bottom:
-    ; Reserve 64 bytes for the stack
-    resb 64
+    resb 4096 * 4
 stack_top:

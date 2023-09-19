@@ -84,6 +84,9 @@ impl Printer {
             self.column = 0;
             self.row += 1;
         }
+        if self.row == BUFFER_HEIGHT {
+            self.row = 0;
+        }
         // Write the word
         unsafe {(*VGA)[self.row][self.column].write(sc);};
         self.column += 1;
