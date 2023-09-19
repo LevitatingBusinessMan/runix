@@ -8,6 +8,7 @@ kernel:
 	cargo build
 
 boot: src/boot/multiboot_header.asm src/boot/boot.asm
+	mkdir target
 	nasm -felf64 src/boot/multiboot_header.asm -o target/multiboot_header.o
 	nasm -felf64 src/boot/boot.asm -o target/boot.o
 

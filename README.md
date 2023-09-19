@@ -1,6 +1,7 @@
-# Build rust portion
-```SH
-cargo build --target x86-runix.json -Z build-std=core
+# Building
+```
+$ make
+$ make run
 ```
 
 # Debug kernel
