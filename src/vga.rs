@@ -1,6 +1,6 @@
 // https://en.wikipedia.org/wiki/VGA_text_mode
 // https://en.wikipedia.org/wiki/Code_page_437
-use core::fmt;
+use core::{fmt, mem::MaybeUninit};
 use volatile::Volatile;
 use spin::{Mutex, Lazy};
 
@@ -28,6 +28,7 @@ pub const BUFFER_HEIGHT: usize = 25;
 
 //static VGA: &'static mut VGABuffer = unsafe { &mut *(0xb8000 as *mut VGABuffer) };
 const VGA: *mut VGABuffer = 0xb8000 as *mut VGABuffer;
+
 
 pub static PRINTER: Lazy<Mutex<Printer>> = Lazy::new(||
     Mutex::new(Printer { column: 0, row: 0 })
