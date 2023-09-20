@@ -138,6 +138,11 @@ pub fn fill(bg: Color) {
     }
 }
 
+/// Clear the screen, making it white
+pub fn clear() {
+    fill(Color::White);
+}
+
 /// Print at a specific row and column
 pub fn print_at(x: usize, y: usize, bytes: &[u8], fg: Color, bg: Color) {
     let x_init = x;
