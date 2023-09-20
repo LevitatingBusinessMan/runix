@@ -29,27 +29,27 @@ pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
 
     let mbi = BootInformation::load(mbi_pointer);
 
-    println!("Multiboot: {:#7x?} - {:#7x?}", mbi_pointer, mbi_pointer as *const () as usize + mbi.total_size as usize);
+    println!("Multiboot at: {:#7x?} - {:#7x?}", mbi_pointer, mbi_pointer as *const () as usize + mbi.total_size as usize);
 
-    // let cmdline = mbi.boot_command_line().unwrap();
+    let bootloader_name = mbi.bootloader_name().unwrap();
+    let cmdline = mbi.boot_command_line().unwrap();
 
-    // println!("Command line: {}", &cmdline.to_str().unwrap());
+    println!("Booted from: {}", &bootloader_name.to_str().unwrap());
+    println!("Command line: {}", &cmdline.to_str().unwrap());
 
-    // println!("Memory areas: ");
-    // let memory_map = mbi.memory_map().unwrap();
-    // for entry in &memory_map.entries {
-    //     println!("    base: {:#14x}   size: {:#14x} (type {:#x})", entry.base_addr, entry.length, entry.type_)
-    // }
-
-    // // let x = unsafe {
-    // //     multiboot2::BootInformation::load(mbi_pointer as *const multiboot2::BootInformationHeader).unwrap()
-    // // };
-
-    let elfs = mbi.elf_symbols();
-
-    for elf in elfs {
-        println!("Got myself an elf")
+    println!("Memory areas: ");
+    let memory_map = mbi.memory_map().unwrap();
+    for entry in &memory_map.entries {
+        println!("    base: {:#14x}   size: {:#14x} (type {:#x})", entry.base_addr, entry.length, entry.type_)
     }
+
+    let elf = mbi.elf_symbols().next().expect("No ELF symbols");
+    //println!("{}", elf.shndx);
+    println!(
+        "Kernel at: {:#x?} - {:#x?}",
+        elf.sections().map(|s| s.addr).min().unwrap(),
+        elf.sections().map(|s| s.addr + s.size).max().unwrap()
+    );
 
     loop{}
 }

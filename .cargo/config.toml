@@ -5,3 +5,4 @@ build-std-features = ["compiler-builtins-mem"]
 
 [build]
 target = "x86-runix.json"
+rustdocflags = "--document-private-items"

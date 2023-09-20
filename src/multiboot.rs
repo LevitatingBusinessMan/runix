@@ -17,13 +17,66 @@ pub struct BootInformation {
     pub tags: [u8],
 }
 
+/// See man elf(5)
 #[repr(C)]
 pub struct ElfSymbol {
     pub num: u16,
     pub entsize: u16,
     pub shndx: u16,
-    pub reserved: u16,
+    _reserved: u16,
     pub section_headers: [u8],
+}
+
+// https://en.wikipedia.org/wiki/Executable_and_Linkable_Format#Section_header
+impl ElfSymbol {
+    pub fn sections(&'static self) -> impl Iterator<Item = &'static ElfSection> {
+        ElfSectionIter {symbol: &self, i: 0}
+    }
+}
+
+pub struct ElfSectionIter {
+    symbol: &'static ElfSymbol,
+    i: usize,
+}
+
+#[repr(C)]
+/// See man elf(5)
+pub struct ElfSection {
+    /// An offset to a string in the .shstrtab section that represents the name of this section. 
+    pub name: u32,
+    /// Identifies the type of this header.
+    pub type_: u32,
+    /// Identifies the attributes of the section. 
+    pub flags: usize,
+    /// Virtual address of the section in memory, for sections that are loaded. 
+    pub addr: usize,
+    /// Offset of the section in the file image. 
+    pub offset: usize,
+    /// Size in bytes of the section in the file image. May be 0. 
+    pub size: usize,
+    /// Contains the section index of an associated section. This field is used for several purposes, depending on the type of section. 
+    pub link: u32,
+    /// Contains extra information about the section. This field is used for several purposes, depending on the type of section. 
+    pub info: u32,
+    /// Contains the required alignment of the section. This field must be a power of two. 
+    pub addr_align: u64,
+    /// Contains the size, in bytes, of each entry, for sections that contain fixed-size entries. Otherwise, this field contains zero. 
+    pub entsize: usize,
+}
+
+impl Iterator for ElfSectionIter {
+    type Item = &'static ElfSection;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.i >= self.symbol.num as usize {
+            return None;
+        }
+        let addr = addr_of!(self.symbol.section_headers) as *const () as usize + self.i;
+        self.i += core::mem::size_of::<ElfSection>();
+        unsafe {
+            return Some(&*ptr::from_raw_parts(addr as *const (), ()));
+        }
+    }
 }
 
 #[repr(C)]
@@ -39,12 +92,46 @@ pub enum Tag {
     End = 0,
     BootCommandLine(&'static CStr) = 1,
     BootLoaderName(&'static CStr) = 2,
+    BasicMemInfo(&'static BasicMemInfo) = 4,
+    BIOSBootDevice(&'static BIOSBootDevice) = 5,
     MemoryMap(&'static MemoryMap) = 6,
+    FrameBufferInfo(&'static FrameBufferInfo) = 8,
     ElfSymbol(&'static ElfSymbol) = 9,
     APMTable(&'static APMTable) = 10,
+    ACPIOldRSDP(&'static [u8]) = 14,
+    ACPINewRSDP(&'static [u8]) = 15,
+    NetworkInfo(&'static [u8]) = 16,
     ImageLoadBase(&'static ImageLoadBase) = 21,
-    //Unknown(&'static [u8]),
+    /// Any tag not explicitly added here. With type
+    Unknown(u32, &'static [u8]),
 }
+
+#[repr(C)]
+pub struct FrameBufferInfo {
+    pub framebuffer_addr: u64,
+    pub framebuffer_pitch: u32,
+    pub framebuffer_width: u32,
+    pub framebuffer_height: u32,
+    pub framebuffer_bpp: u8,
+    pub framebuffer_type: u8,
+    _reserved: u8,
+    /// This still has to be expanded
+    color_info: [u8],
+}
+
+#[repr(C)]
+pub struct BasicMemInfo {
+    pub mem_lower: u32,
+    pub mem_upper: u32,
+}
+
+#[repr(C)]
+pub struct BIOSBootDevice {
+    pub biosdev: u32,
+    pub partition: u32,
+    pub sub_partition: u32,
+}
+
 
 #[repr(C)]
 pub struct MemoryMap {
@@ -118,10 +205,25 @@ impl Iterator for TagIter {
                     &*ptr::from_raw_parts(addr as *const (), size)
                 }))
             },
+            4 => {
+                Some(Tag::BasicMemInfo(unsafe {
+                    &*ptr::from_raw_parts(addr as *const (), ())
+                }))
+            },
+            5 => {
+                Some(Tag::BIOSBootDevice(unsafe {
+                    &*ptr::from_raw_parts(addr as *const (), ())
+                }))
+            },
             6 => {
                 let entries = (size - 8) / size_of::<MemoryMapEntry>();
                 Some(Tag::MemoryMap(unsafe {
                     &*ptr::from_raw_parts(addr as *const (), entries)
+                }))
+            },
+            8 => {
+                Some(Tag::FrameBufferInfo(unsafe {
+                    &*ptr::from_raw_parts(addr as *const (), size)
                 }))
             },
             9 => {
@@ -134,21 +236,31 @@ impl Iterator for TagIter {
                     &*ptr::from_raw_parts(addr as *const (), ())
                 }))
             },
+            14 => {
+                Some(Tag::ACPIOldRSDP(unsafe {
+                    &*ptr::from_raw_parts(addr as *const (), size)
+                }))
+            },
+            15 => {
+                Some(Tag::ACPINewRSDP(unsafe {
+                    &*ptr::from_raw_parts(addr as *const (), size)
+                }))
+            },
             21 => {
                 Some(Tag::ImageLoadBase(unsafe {
                     &*ptr::from_raw_parts(addr as *const (), ())
                 }))
             },
             _ => {
-                panic!(
-                    "Unknown tag with type {} and size {:#x} at {:#x}",
-                    type_,
-                    size,
-                    addr_of!(self.mbi.tags) as *const () as usize + self.i
-                );
-                // Some(Tag::Unknown(unsafe {
-                //     &*ptr::from_raw_parts(addr as *const (), size)
-                // }))
+                // panic!(
+                //     "Unknown tag with type {} and size {:#x} at {:#x}",
+                //     type_,
+                //     size,
+                //     addr_of!(self.mbi.tags) as *const () as usize + self.i
+                // );
+                Some(Tag::Unknown(type_, unsafe {
+                    &*ptr::from_raw_parts(addr as *const (), size)
+                }))
             }
         }
     }
@@ -164,6 +276,10 @@ impl BootInformation {
     /// Iterate over the tags
     pub fn tags(&'static self) -> TagIter {
         TagIter { mbi: &self, i: 0 }
+    }
+
+    pub fn bootloader_name(&'static self) -> Option<&'static CStr> {
+        self.tags().find_map(|t| if let Tag::BootLoaderName(bln) = t {Some(bln)} else {None})
     }
 
     pub fn boot_command_line(&'static self) -> Option<&'static CStr> {
