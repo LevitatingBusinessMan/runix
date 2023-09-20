@@ -18,6 +18,7 @@ pub struct BootInformation {
 }
 
 /// See man elf(5)
+// https://en.wikipedia.org/wiki/Executable_and_Linkable_Format
 #[repr(C)]
 pub struct ElfSymbol {
     pub num: u16,
@@ -27,7 +28,16 @@ pub struct ElfSymbol {
     pub section_headers: [u8],
 }
 
-// https://en.wikipedia.org/wiki/Executable_and_Linkable_Format#Section_header
+impl core::fmt::Debug for ElfSymbol {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("ElfSymbol")
+        .field("num", &self.num)
+        .field("entsize", &self.entsize)
+        .field("shndx", &self.shndx)
+        .finish()
+    }
+}
+
 impl ElfSymbol {
     pub fn sections(&'static self) -> impl Iterator<Item = &'static ElfSection> {
         ElfSectionIter {symbol: &self, i: 0}
@@ -39,8 +49,11 @@ pub struct ElfSectionIter {
     i: usize,
 }
 
-#[repr(C)]
+// This is padded wrong or something (not at an 8th)
+#[repr(packed)]
+#[derive(Debug)]
 /// See man elf(5)
+// https://en.wikipedia.org/wiki/Executable_and_Linkable_Format#Section_header
 pub struct ElfSection {
     /// An offset to a string in the .shstrtab section that represents the name of this section. 
     pub name: u32,
@@ -68,11 +81,16 @@ impl Iterator for ElfSectionIter {
     type Item = &'static ElfSection;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.i >= self.symbol.num as usize {
+        // extra 4 because of weird padding
+        // I think I can use shndx like this to correctly get to the first section?
+        let offset = self.symbol.shndx as usize + 4;
+
+        if self.i + 1 >= self.symbol.num as usize {
             return None;
         }
-        let addr = addr_of!(self.symbol.section_headers) as *const () as usize + self.i;
-        self.i += core::mem::size_of::<ElfSection>();
+        
+        let addr = addr_of!(self.symbol.section_headers) as *const () as usize + offset + self.i * core::mem::size_of::<ElfSection>() ;
+        self.i += 1;
         unsafe {
             return Some(&*ptr::from_raw_parts(addr as *const (), ()));
         }

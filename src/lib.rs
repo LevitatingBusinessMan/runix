@@ -19,7 +19,7 @@ const VGA_SIZE: u32 = 25 * 80;
 static WELCOME_STRING :&'static str = "Welcome to Runix!";
 
 use multiboot::BootInformation;
-//use multiboot2;
+use multiboot2;
 
 #[no_mangle]
 // https://en.wikipedia.org/wiki/VGA_text_mode
@@ -30,6 +30,13 @@ pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
     let mbi = BootInformation::load(mbi_pointer);
 
     println!("Multiboot at: {:#7x?} - {:#7x?}", mbi_pointer, mbi_pointer as *const () as usize + mbi.total_size as usize);
+    let elf = mbi.elf_symbols().next().expect("No ELF symbols");
+
+    println!(
+        "Kernel at: {:#x?} - {:#x?}",
+        elf.sections().map(|s| s.addr).min().unwrap(),
+        elf.sections().map(|s| s.addr + s.size).max().unwrap()
+    );
 
     let bootloader_name = mbi.bootloader_name().unwrap();
     let cmdline = mbi.boot_command_line().unwrap();
@@ -42,14 +49,6 @@ pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
     for entry in &memory_map.entries {
         println!("    base: {:#14x}   size: {:#14x} (type {:#x})", entry.base_addr, entry.length, entry.type_)
     }
-
-    let elf = mbi.elf_symbols().next().expect("No ELF symbols");
-    //println!("{}", elf.shndx);
-    println!(
-        "Kernel at: {:#x?} - {:#x?}",
-        elf.sections().map(|s| s.addr).min().unwrap(),
-        elf.sections().map(|s| s.addr + s.size).max().unwrap()
-    );
 
     loop{}
 }
