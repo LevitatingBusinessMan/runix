@@ -1,6 +1,6 @@
 iso: link
 	mkdir -p target/isofiles/boot/grub
-	cp target/kernel.elf target/isofiles/boot/kernel.elf
+	cp target/runix.elf target/isofiles/boot/runix.elf
 	cp src/boot/grub.cfg target/isofiles/boot/grub/grub.cfg
 	grub-mkrescue -o runix.iso target/isofiles
 
@@ -13,7 +13,7 @@ boot: src/boot/multiboot_header.asm src/boot/boot.asm
 	nasm -felf64 src/boot/boot.asm -o target/boot.o
 
 link: boot kernel
-	ld -n -o target/kernel.elf -T link.ld target/multiboot_header.o target/boot.o target/x86-runix/debug/librunix.a
+	ld -n -o target/runix.elf -T link.ld target/multiboot_header.o target/boot.o target/x86-runix/debug/librunix.a
 
 clean:
 	rm -rf *.o *.bin runix.iso isofiles
