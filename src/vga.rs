@@ -1,6 +1,6 @@
 // https://en.wikipedia.org/wiki/VGA_text_mode
 // https://en.wikipedia.org/wiki/Code_page_437
-use core::{fmt, mem::MaybeUninit};
+use core::fmt;
 use volatile::Volatile;
 use spin::{Mutex, Lazy};
 
@@ -39,12 +39,6 @@ pub static PRINTER: Lazy<Mutex<Printer>> = Lazy::new(||
 struct ScreenCharacter {
     character: u8,
     color: ColorAttribute,
-}
-
-impl ScreenCharacter {
-    pub fn new(color: ColorAttribute, character: u8) -> Self {
-        ScreenCharacter { color, character }
-    }
 }
 
 #[derive(Clone, Copy)]
@@ -168,6 +162,7 @@ pub fn print_at(x: usize, y: usize, bytes: &[u8], fg: Color, bg: Color) {
 #[derive(Clone, Copy, Eq, PartialEq, Debug)]
 // https://wiki.osdev.org/Printing_to_Screen#Color_Table
 // I gave all these discriminators, but it's just 0 to 15
+#[allow(dead_code)]
 pub enum Color {
     Black       =  0b000,
     Blue        =  0b001,

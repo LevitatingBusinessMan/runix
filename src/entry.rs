@@ -5,18 +5,13 @@
 #![feature(ptr_metadata)]
 #![feature(const_maybe_uninit_zeroed)]
 
-use core::{cell::{OnceCell, UnsafeCell}, mem::MaybeUninit, sync::atomic::AtomicPtr};
 
-use static_cell::StaticCell;
 use vga::Color;
 mod panic;
 #[macro_use]
 mod vga;
 mod multiboot;
 mod conf;
-
-const VGA: u32 = 0xb8000;
-const VGA_SIZE: u32 = 25 * 80;
 
 static WELCOME_STRING :&'static str = "Welcome to Runix!";
 
@@ -26,6 +21,7 @@ pub static MBI: spin::Once<&'static BootInformation> = spin::Once::new();
 
 #[no_mangle]
 // https://en.wikipedia.org/wiki/VGA_text_mode
+#[allow(improper_ctypes_definitions)]
 pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
     vga::clear();
 
@@ -49,9 +45,7 @@ pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
             elf.sections().map(|s| s.addr + s.size).max().unwrap()
         );
     
-        let bootloader_name = mbi.bootloader_name().unwrap();
-        let cmdline = mbi.boot_command_line().unwrap();
-    
+        let bootloader_name = mbi.bootloader_name().unwrap();    
         println!("Booted from: {}", &bootloader_name.to_str().unwrap());
     
         println!("Memory areas: ");

@@ -38,7 +38,7 @@ pub(super) fn parse(args: &str) {
         };
     }
 
-    let mut backslash = false;
+    //let mut backslash = false;
 
     for c in args.chars() {
         if c == ' ' {

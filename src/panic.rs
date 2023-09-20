@@ -4,7 +4,7 @@ use crate::vga;
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-	let mut cover;
+	let cover;
 	if let Some(conf) = crate::conf::CONFIG.try_read() {
 		cover = conf.panic_cover;
 	} else {

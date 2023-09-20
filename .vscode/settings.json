@@ -1,0 +1,4 @@
+{
+  "rust-analyzer.cargo.target": "x86-runix.json",
+  "rust-analyzer.check.allTargets": false,
+}

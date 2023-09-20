@@ -3,9 +3,7 @@
 use core::ptr;
 use core::ptr::addr_of;
 use core::ffi::CStr;
-use core::mem::{discriminant, size_of};
-
-use crate::println;
+use core::mem;
 
 #[repr(C)]
 pub struct BootInformation {
@@ -234,7 +232,7 @@ impl Iterator for TagIter {
                 }))
             },
             6 => {
-                let entries = (size - 8) / size_of::<MemoryMapEntry>();
+                let entries = (size - 8) / mem::size_of::<MemoryMapEntry>();
                 Some(Tag::MemoryMap(unsafe {
                     &*ptr::from_raw_parts(addr as *const (), entries)
                 }))
