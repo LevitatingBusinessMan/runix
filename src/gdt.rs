@@ -10,7 +10,7 @@ static TSS: Once<TaskStateSegment> = Once::new();
 
 fn init_tss() {
     let mut tss = TaskStateSegment::new();
-    const DOUBLE_FAULT_STACK_SIZE: usize = 4096 * 16;
+    const DOUBLE_FAULT_STACK_SIZE: usize = 4096 *8;
     static mut DOUBLE_FAULT_STACK: [u8; DOUBLE_FAULT_STACK_SIZE] = [0; DOUBLE_FAULT_STACK_SIZE];    
     let stack_start = VirtAddr::from_ptr(unsafe {&DOUBLE_FAULT_STACK});
     tss.interrupt_stack_table[DOUBLE_FAULT_IST_INDEX as usize] =  stack_start + DOUBLE_FAULT_STACK_SIZE;

@@ -5,7 +5,7 @@
  */
 // https://github.com/rust-lang/rust/pull/39832
 
-use x86_64::structures::idt::{InterruptStackFrame, InterruptDescriptorTable};
+use x86_64::structures::idt::{InterruptStackFrame, InterruptDescriptorTable, ExceptionVector};
 use x86_64::set_general_handler;
 use spin::Once;
 use crate::gdt;
@@ -28,13 +28,15 @@ pub fn init_idt() {
     IDT.get().unwrap().load();
 }
 
+// There is an enum with exception numbers:
+// https://docs.rs/x86_64/latest/src/x86_64/structures/idt.rs.html#1137-1206
+
 fn generic_handler(stack_frame: InterruptStackFrame, index: u8, err_code : Option<u64>) {
     panic!("Unimplemented interrupt {:#x} (err: {:x?})\n{:?}", index, err_code, stack_frame);
 }
 
 extern "x86-interrupt" fn double_fault_handler(stack_frame: InterruptStackFrame, err_code : u64) -> ! {
-    loop {}
-    //panic!("DOUBLE FAULT {:#x} \n{:?}", err_code, stack_frame);
+    panic!("DOUBLE FAULT {:#x} \n{:?}", err_code, stack_frame);
 }
 
 extern "x86-interrupt" fn breakpoint_handler(stack_frame: InterruptStackFrame) {

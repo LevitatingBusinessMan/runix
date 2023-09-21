@@ -38,8 +38,6 @@ pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
     interrupts::init_idt();
     vga::clear();
 
-    //stack_overflow();
-
     let mbi = BootInformation::load(mbi_pointer);
 
     //MBI.call_once(|| mbi);
@@ -76,11 +74,15 @@ pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
         }
     }
 
-    //stack_overflow();
-
     loop{}
 }
 
+#[warn(unconditional_recursion)]
+/**
+ * Overflows the stack for testing purposes
+ * Currently this will cause the page table entries to be destroyed
+ * Which is obviously irrecoverable
+ */
 fn stack_overflow() {
     stack_overflow()
 }

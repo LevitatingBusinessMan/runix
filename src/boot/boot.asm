@@ -162,7 +162,7 @@ start:
 
 .setup_table_pdp:
     mov eax, ebx            ; Copy PT address to PDP slot
-    or eax, 0b10000011      ; Set flags (huge + writabe + presnet)
+    or eax, 0b10000011      ; Set flags (huge + writabe + present)
     mov [PDP + edx], eax    ; Save page address to slot
     add edx, 8              ; Next slot
     add ebx, 0x200000
@@ -221,10 +221,9 @@ PDPT:
     resb 4096
 PDP:
     resb 4096
-
 ; Pointer to multiboot information
 boot_info:
     resb 32
 stack_bottom:
-    resb 4096 * 32
+    resb 4096 * 16
 stack_top:
