@@ -225,5 +225,5 @@ PDP:
 boot_info:
     resb 32
 stack_bottom:
-    resb 4096 * 4
+    resb 4096 * 16
 stack_top:

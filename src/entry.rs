@@ -4,37 +4,46 @@
 #![feature(panic_info_message)]
 #![feature(ptr_metadata)]
 #![feature(const_maybe_uninit_zeroed)]
+#![feature(abi_x86_interrupt)]
 
-
-use vga::Color;
 mod panic;
 #[macro_use]
 mod vga;
 mod multiboot;
 mod conf;
+mod interrupts;
+mod gdt;
 
 static WELCOME_STRING :&'static str = "Welcome to Runix!";
 
+use vga::Color;
 use multiboot::BootInformation;
+use spin::Once;
 
-pub static MBI: spin::Once<&'static BootInformation> = spin::Once::new();
+pub static MBI: Once<&'static BootInformation> = Once::new();
+
+macro_rules! r#break {
+    () => {
+        x86_64::instructions::interrupts::int3();
+    };
+}
 
 #[no_mangle]
 // https://en.wikipedia.org/wiki/VGA_text_mode
 #[allow(improper_ctypes_definitions)]
 pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
+    interrupts::init_idt();
     vga::clear();
 
     let mbi = BootInformation::load(mbi_pointer);
 
-    MBI.call_once(|| mbi);
+    //MBI.call_once(|| mbi);
 
     conf::parse(mbi.boot_command_line().expect("Could not get cmdline").to_str().unwrap());
 
     for tag in mbi.tags() {
         if let multiboot::Tag::Unknown(type_, data) = tag {
-            vga::PRINTER.lock().print_chars("WARNING", crate::vga::Color::White, crate::vga::Color::Red);
-            println!(" Unknown multiboot tag: type {} size: {:#x}", type_, data.len());
+            wprintln!(" Unknown multiboot tag: type {} size: {:#x}", type_, data.len());
         }
     }
 
@@ -62,5 +71,11 @@ pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
         }
     }
 
+    stack_overflow();
+
     loop{}
+}
+
+fn stack_overflow() {
+    stack_overflow()
 }

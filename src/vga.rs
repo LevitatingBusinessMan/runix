@@ -1,6 +1,8 @@
+//! VGA driver module
+
 // https://en.wikipedia.org/wiki/VGA_text_mode
 // https://en.wikipedia.org/wiki/Code_page_437
-use core::fmt;
+use core::fmt::{self, Write};
 use volatile::Volatile;
 use spin::{Mutex, Lazy};
 
@@ -11,10 +13,57 @@ macro_rules! println {
 }
 
 #[macro_export]
+macro_rules! eprintln {
+    () => (print!("\n"));
+    ($($arg:tt)*) => (eprint!("{}\n", format_args!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! wprintln {
+    () => (print!("\n"));
+    ($($arg:tt)*) => (wprint!("{}\n", format_args!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! exprintln {
+    () => (print!("\n"));
+    ($($arg:tt)*) => (exprint!("{}\n", format_args!($($arg)*)));
+}
+
+#[macro_export]
 macro_rules! print {
     ($($arg:tt)*) => {{
         $crate::vga::print_args(format_args!($($arg)*));
     }};
+}
+
+#[macro_export]
+macro_rules! wprint {
+    ($($arg:tt)*) => {{
+        $crate::vga::print_err("WARNING");
+        $crate::vga::print_args(format_args!($($arg)*));
+    }};
+}
+
+#[macro_export]
+macro_rules! eprint {
+    ($($arg:tt)*) => {{
+        $crate::vga::print_err("ERR");
+        $crate::vga::print_args(format_args!($($arg)*));
+    }};
+}
+
+#[macro_export]
+macro_rules! exprint {
+    ($($arg:tt)*) => {{
+        $crate::vga::print_err("EXCEPTION");
+        $crate::vga::print_args(format_args!($($arg)*));
+    }};
+}
+
+pub fn print_err(err: &'static str) {
+    PRINTER.lock().print_chars(err, Color::Yellow, Color::Red);
+    PRINTER.lock().write_char(' ').unwrap();
 }
 
 // Helper function for the `print` macro to prevent deadlocks
