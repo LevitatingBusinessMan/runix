@@ -9,6 +9,7 @@ use x86_64::structures::idt::{InterruptStackFrame, InterruptDescriptorTable};
 use x86_64::set_general_handler;
 use spin::Once;
 use crate::gdt;
+use crate::hbreak;
 
 /// Statically allocated IDT
 // Make sure you have enough stack size for this
@@ -32,7 +33,8 @@ fn generic_handler(stack_frame: InterruptStackFrame, index: u8, err_code : Optio
 }
 
 extern "x86-interrupt" fn double_fault_handler(stack_frame: InterruptStackFrame, err_code : u64) -> ! {
-    panic!("DOUBLE FAULT {:#x} \n{:?}", err_code, stack_frame);
+    loop {}
+    //panic!("DOUBLE FAULT {:#x} \n{:?}", err_code, stack_frame);
 }
 
 extern "x86-interrupt" fn breakpoint_handler(stack_frame: InterruptStackFrame) {

@@ -1,5 +1,3 @@
-use core::ptr::addr_of;
-
 use x86_64::registers::segmentation::Segment;
 use x86_64::structures::gdt::{GlobalDescriptorTable, Descriptor, SegmentSelector};
 use x86_64::structures::tss::TaskStateSegment;
@@ -7,14 +5,14 @@ use x86_64::VirtAddr;
 
 use spin::Once;
 
-const DOUBLE_FAULT_STACK_SIZE: usize = 4096 * 16; 
-static DOUBLE_FAULT_STACK: [u8; DOUBLE_FAULT_STACK_SIZE] = [0; DOUBLE_FAULT_STACK_SIZE];
 pub const DOUBLE_FAULT_IST_INDEX: u16 = 0;
 static TSS: Once<TaskStateSegment> = Once::new();
 
 fn init_tss() {
     let mut tss = TaskStateSegment::new();
-    let stack_start = VirtAddr::from_ptr(addr_of!(DOUBLE_FAULT_STACK));
+    const DOUBLE_FAULT_STACK_SIZE: usize = 4096 * 16;
+    static mut DOUBLE_FAULT_STACK: [u8; DOUBLE_FAULT_STACK_SIZE] = [0; DOUBLE_FAULT_STACK_SIZE];    
+    let stack_start = VirtAddr::from_ptr(unsafe {&DOUBLE_FAULT_STACK});
     tss.interrupt_stack_table[DOUBLE_FAULT_IST_INDEX as usize] =  stack_start + DOUBLE_FAULT_STACK_SIZE;
     TSS.call_once(|| tss);
 }

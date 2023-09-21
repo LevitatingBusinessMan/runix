@@ -5,6 +5,7 @@
 #![feature(ptr_metadata)]
 #![feature(const_maybe_uninit_zeroed)]
 #![feature(abi_x86_interrupt)]
+#![feature(ptr_from_ref)]
 
 mod panic;
 #[macro_use]
@@ -22,7 +23,8 @@ use spin::Once;
 
 pub static MBI: Once<&'static BootInformation> = Once::new();
 
-macro_rules! r#break {
+#[macro_export]
+macro_rules! hbreak {
     () => {
         x86_64::instructions::interrupts::int3();
     };
@@ -35,6 +37,8 @@ pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
     gdt::init_gdt();
     interrupts::init_idt();
     vga::clear();
+
+    //stack_overflow();
 
     let mbi = BootInformation::load(mbi_pointer);
 
@@ -72,7 +76,7 @@ pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
         }
     }
 
-    stack_overflow();
+    //stack_overflow();
 
     loop{}
 }
