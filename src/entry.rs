@@ -31,6 +31,13 @@ pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
 
     conf::parse(mbi.boot_command_line().expect("Could not get cmdline").to_str().unwrap());
 
+    for tag in mbi.tags() {
+        if let multiboot::Tag::Unknown(type_, data) = tag {
+            vga::PRINTER.lock().print_chars("WARNING", crate::vga::Color::White, crate::vga::Color::Red);
+            println!(" Unknown multiboot tag: type {} size: {:#x}", type_, data.len());
+        }
+    }
+
     if conf::CONFIG.read().welcome {
         vga::print_at(vga::BUFFER_WIDTH/2 - WELCOME_STRING.len()/2, 12, WELCOME_STRING.as_bytes(), Color::Black, Color::White);
     }
