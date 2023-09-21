@@ -37,6 +37,7 @@ start:
     ; Load GDT
     lgdt [gdt.pointer]
 
+    ; Far jump to segment
     jmp 8:long_mode
 
 .disable_cursor:

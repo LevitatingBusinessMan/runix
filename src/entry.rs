@@ -32,6 +32,7 @@ macro_rules! r#break {
 // https://en.wikipedia.org/wiki/VGA_text_mode
 #[allow(improper_ctypes_definitions)]
 pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
+    gdt::init_gdt();
     interrupts::init_idt();
     vga::clear();
 

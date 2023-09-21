@@ -8,6 +8,7 @@
 use x86_64::structures::idt::{InterruptStackFrame, InterruptDescriptorTable};
 use x86_64::set_general_handler;
 use spin::Once;
+use crate::gdt;
 
 /// Statically allocated IDT
 // Make sure you have enough stack size for this
@@ -17,7 +18,11 @@ pub fn init_idt() {
     let mut idt = InterruptDescriptorTable::new();
     set_general_handler!(&mut idt, generic_handler);
     idt.breakpoint.set_handler_fn(breakpoint_handler);
-    idt.double_fault.set_handler_fn(double_fault_handler);
+    let double_fault_entry = idt.double_fault.set_handler_fn(double_fault_handler);
+    unsafe {
+        // register the double fault handler with a clean stack
+        double_fault_entry.set_stack_index(gdt::DOUBLE_FAULT_IST_INDEX);
+    }
     IDT.call_once(|| idt);
     IDT.get().unwrap().load();
 }
