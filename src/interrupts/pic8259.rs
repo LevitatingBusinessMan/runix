@@ -28,6 +28,7 @@ pub fn send_eoi(irq: u8) {
     unsafe {PIC1.command.write(0x20)};
 }
 
+/// Reinitiliaze the PIC to use an offset above 0x20
 pub fn init_pic() {
 
     // Older moderboards might require some processing timme between the writes to the PICS
@@ -43,9 +44,9 @@ pub fn init_pic() {
         io_wait!();
 
         // Tell the PICs what offsets to use
-        PIC1.data.write(0x20);
+        PIC1.data.write(PIC1_OFFSET as u16);
         io_wait!();
-        PIC2.data.write(0x28);
+        PIC2.data.write(PIC2_OFFSET as u16);
         io_wait!();
 
         // Tell master to use line 4

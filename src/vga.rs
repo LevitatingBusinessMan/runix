@@ -80,7 +80,7 @@ const VGA: *mut VGABuffer = 0xb8000 as *mut VGABuffer;
 
 
 pub static PRINTER: Lazy<Mutex<Printer>> = Lazy::new(||
-    Mutex::new(Printer { column: 0, row: 0 })
+    Mutex::new(Printer { col: 0, row: 0 })
 );
 
 #[repr(C)]
@@ -104,19 +104,33 @@ type VGABuffer = [[Volatile<ScreenCharacter>; BUFFER_WIDTH]; BUFFER_HEIGHT];
 /// Prints black on white from first row
 /// To specify location and color see `ColoredPrinter`
 pub struct Printer {
-    column: usize,
+    col: usize,
     row: usize,
+}
+
+// Move all lines up
+pub fn scroll(count: u8) {
+    for row in 1..BUFFER_HEIGHT {
+        for col in 0..BUFFER_WIDTH {
+            unsafe {
+                let sc = (*VGA)[row][col].read();
+                (*VGA)[row-1][col].write(sc);
+            };
+        }
+    }
+    if count > 0 {
+        scroll(count-1);
+    }
 }
 
 impl Printer {
     pub fn new() -> Self {
-        Printer { row: 0, column: 0 }
+        Printer { row: 0, col: 0 }
     }
     pub fn print_byte(&mut self, character: u8, fg: Color, bg: Color) {
-        //let mut x : 
         if character == '\n' as u8 {
             self.row += 1;
-            self.column = 0;
+            self.col = 0;
             return;
         }
 
@@ -124,16 +138,20 @@ impl Printer {
             color:(fg,bg).into(),
             character,
         };
-        if self.column == BUFFER_WIDTH {
-            self.column = 0;
+
+        if self.col == BUFFER_WIDTH {
+            self.col = 0;
             self.row += 1;
         }
+
         if self.row == BUFFER_HEIGHT {
-            self.row = 0;
+            scroll(0);
+            self.row -=1;
         }
+
         // Write the word
-        unsafe {(*VGA)[self.row][self.column].write(sc);};
-        self.column += 1;
+        unsafe {(*VGA)[self.row][self.col].write(sc);};
+        self.col += 1;
     }
     pub fn print_chars(&mut self, characters: &str, fg: Color, bg: Color) {
         for c in characters.chars() {
@@ -158,7 +176,7 @@ pub struct ColoredPrinter {
 
 impl ColoredPrinter {
     pub fn new(x: usize, y: usize, fg: Color, bg: Color) -> Self {
-        ColoredPrinter { printer: Printer {row: y, column: x}, fg, bg}
+        ColoredPrinter { printer: Printer {row: y, col: x}, fg, bg}
     }
 }
 
@@ -188,6 +206,7 @@ pub fn clear() {
 }
 
 /// Print at a specific row and column
+/// FIXME: prevent writing beyond buffer
 pub fn print_at(x: usize, y: usize, bytes: &[u8], fg: Color, bg: Color) {
     let x_init = x;
     let mut x = x_init;

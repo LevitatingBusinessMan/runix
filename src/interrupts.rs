@@ -17,7 +17,8 @@ static IDT: Once<InterruptDescriptorTable> = Once::new();
 
 pub fn init_idt() {
     let mut idt = InterruptDescriptorTable::new();
-    set_general_handler!(&mut idt, generic_handler);
+    set_general_handler!(&mut idt, generic_interrupt_handler);
+    set_general_handler!(&mut idt, generic_exception_handler, 0..0x20);
     idt.breakpoint.set_handler_fn(breakpoint_handler);
     let double_fault_entry = idt.double_fault.set_handler_fn(double_fault_handler);
     unsafe {
@@ -32,13 +33,19 @@ pub fn init_idt() {
 pub fn init() {
     init_idt();
     pic8259::init_pic();
+    x86_64::instructions::interrupts::enable();
 }
 
 // There is an enum with exception numbers:
 // https://docs.rs/x86_64/latest/src/x86_64/structures/idt.rs.html#1137-1206
 
-fn generic_handler(stack_frame: InterruptStackFrame, index: u8, err_code : Option<u64>) {
-    wprintln!("Unimplemented interrupt {:#x} (ex: {:?}) (err: {:x?})\n{:?}", index, exception_get_name(index), err_code, stack_frame);
+fn generic_exception_handler(stack_frame: InterruptStackFrame, index: u8, err_code : Option<u64>) {
+    wprintln!("Unimplemented exception {:#x} (ex: {:?}) (err: {:x?})\n{:?}", index, exception_get_name(index).unwrap(), err_code, stack_frame);
+}
+
+fn generic_interrupt_handler(_stack_frame: InterruptStackFrame, index: u8, _err_code : Option<u64>) {
+    wprintln!("Unimplemented interrupt {:#x}", index);
+    pic8259::send_eoi(index);
 }
 
 extern "x86-interrupt" fn double_fault_handler(stack_frame: InterruptStackFrame, err_code : u64) -> ! {

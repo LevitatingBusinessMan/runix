@@ -19,6 +19,8 @@ fn init_tss() {
 
 static GDT: Once<GlobalDescriptorTable> = Once::new();
 
+/// Create and load the GDT.
+/// This also causes TSS to be initialized.
 pub fn init_gdt() {
     if !TSS.is_completed() { init_tss() }
     let mut gdt = GlobalDescriptorTable::new();
