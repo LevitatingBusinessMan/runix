@@ -77,12 +77,13 @@ pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
     loop{}
 }
 
-#[warn(unconditional_recursion)]
 /**
  * Overflows the stack for testing purposes
  * Currently this will cause the page table entries to be destroyed
  * Which is obviously irrecoverable
  */
+#[allow(dead_code)]
+#[allow(unconditional_recursion)]
 fn stack_overflow() {
     stack_overflow()
 }

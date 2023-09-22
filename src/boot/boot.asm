@@ -22,7 +22,7 @@ start:
     mov esp, stack_top
 
     ; Save multiboot information
-    mov [boot_info], ebx
+    mov edi, ebx
 
     call .disable_cursor
     call .confirm_multiboot
@@ -141,32 +141,53 @@ start:
 ; https://os.phil-opp.com/entering-longmode/#paging
 ; https://wiki.osdev.org/Setting_Up_Paging
 
-; I use a single PDP with 64 slots filled pointing to huge 2MiB pages
-; to achieve 128MiB memory.
+
+; We have one of each table. The PT table is full (to get more control of the first 2MiB of pages)
+; The PDT is filled with an aditional 7 huge pages
+; In total we map 16 MiB
 .setup_tables:
     mov eax, PDPT
     or eax, 0b11        ; Set present and writable
     mov [PML4T], eax    ; Save only PDPT in PM4LT
 
-    mov eax, PDP
+    mov eax, PDT
     or eax, 0b11        ; Set present and writable
     mov [PDPT], eax     ; Save only PDP in PDPT
 
-    mov ecx, 64
+    mov eax, PT
+    or eax, 0b11        ; Set present and writable
+    mov [PDT], eax     ; Save only PDP in PDPT
+
+    mov ecx, 512
     mov ebx, 0
     mov edx, 0
 
     ; EBX is location of page
     ; ECX is slots to fill
-    ; EDX is current offset from PDP
+    ; EDX is current offset from table
 
-.setup_table_pdp:
-    mov eax, ebx            ; Copy PT address to PDP slot
+.setup_table_pt:
+    mov eax, ebx            ; Copy page address to entry
+    cmp ebx, guard
+    je .guard               ; Don't set present flag on guard
+    or eax, 0b11            ; Set flags (writabe + present)
+.guard:
+    mov [PT + edx], eax     ; Save page address to slot
+    add edx, 8              ; Next slot
+    add ebx, 0x1000
+    loop .setup_table_pt
+
+    mov ecx, 7
+    mov ebx, 0x200000
+    mov edx, 8
+
+.setup_table_pdt:
+    mov eax, ebx            ; Copy page address to entry
     or eax, 0b10000011      ; Set flags (huge + writabe + present)
-    mov [PDP + edx], eax    ; Save page address to slot
+    mov [PDT + edx], eax    ; Save page address to slot
     add edx, 8              ; Next slot
     add ebx, 0x200000
-    loop .setup_table_pdp
+    loop .setup_table_pdt
 
     ret
 
@@ -208,22 +229,26 @@ long_mode:
     mov gs, ax
 
     ; Call rust
-    mov rdi, [boot_info]
     extern runix
     call runix
     
 ; Will be initialized to 0
 section .bss
-align 4096 ; align to a page size
+; Align with page size
+align 4096
+; Stack
+guard:
+    resb 4096
+stack_bottom:
+    resb 4096 * 16
+stack_top:
+
+; Tables
 PML4T:
     resb 4096
 PDPT:
     resb 4096
-PDP:
+PDT:
     resb 4096
-; Pointer to multiboot information
-boot_info:
-    resb 32
-stack_bottom:
-    resb 4096 * 16
-stack_top:
+PT:
+    resb 4096
