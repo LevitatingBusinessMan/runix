@@ -156,7 +156,7 @@ start:
 
     mov eax, PT
     or eax, 0b11        ; Set present and writable
-    mov [PDT], eax     ; Save only PDP in PDPT
+    mov [PDT], eax      ; Save only PDP in PDPT
 
     mov ecx, 512
     mov ebx, 0
@@ -177,7 +177,7 @@ start:
     add ebx, 0x1000
     loop .setup_table_pt
 
-    mov ecx, 7
+    mov ecx, 7              ; Huge pages to create
     mov ebx, 0x200000
     mov edx, 8
 

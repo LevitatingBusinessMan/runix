@@ -1,3 +1,5 @@
+Runix is a WIP unikernel. The name "runix" stands for: Runix Has Nothing To Do With Unix.
+
 # Welcome page
 ![](screenshots/welcome_to_runix2.png)
 

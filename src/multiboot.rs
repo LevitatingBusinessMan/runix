@@ -17,13 +17,13 @@ pub struct BootInformation {
 
 /// See man elf(5)
 // https://en.wikipedia.org/wiki/Executable_and_Linkable_Format
-#[repr(C)]
+#[repr(align(4))]
 pub struct ElfSymbol {
     pub num: u16,
     pub entsize: u16,
     pub shndx: u16,
     _reserved: u16,
-    pub section_headers: [u8],
+    pub section_headers: [ElfSection],
 }
 
 impl core::fmt::Debug for ElfSymbol {
@@ -48,6 +48,7 @@ pub struct ElfSectionIter {
 }
 
 // This is padded wrong or something (not at an 8th)
+// https://www.gnu.org/software/grub/manual/multiboot2/multiboot.html#C-structure-members-alignment-and-padding-consideration
 #[repr(packed)]
 #[derive(Debug)]
 /// See man elf(5)

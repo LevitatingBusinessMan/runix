@@ -6,6 +6,8 @@
 #![feature(const_maybe_uninit_zeroed)]
 #![feature(abi_x86_interrupt)]
 #![feature(ptr_from_ref)]
+#![feature(asm_const)]
+#![feature(exclusive_range_pattern)]
 
 mod panic;
 #[macro_use]
@@ -30,12 +32,21 @@ macro_rules! hbreak {
     };
 }
 
+/// Wait a very small amount of time (1 to 4 microseconds, generally).
+/// Useful for implementing a small delay for PIC remapping on old hardware or generally as a simple but imprecise wait.
+#[macro_export]
+macro_rules! io_wait {
+    () => {
+        unsafe {x86_64::instructions::port::Port::new(0x80).write(0 as u8)};
+    };
+}
+
 #[no_mangle]
 // https://en.wikipedia.org/wiki/VGA_text_mode
 #[allow(improper_ctypes_definitions)]
 pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
     gdt::init_gdt();
-    interrupts::init_idt();
+    interrupts::init();
     vga::clear();
 
     let mbi = BootInformation::load(mbi_pointer);
