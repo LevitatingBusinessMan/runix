@@ -62,14 +62,18 @@ macro_rules! exprint {
 }
 
 pub fn print_err(err: &'static str) {
-    PRINTER.lock().print_chars(err, Color::Yellow, Color::Red);
-    PRINTER.lock().write_char(' ').unwrap();
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        PRINTER.lock().print_chars(err, Color::Yellow, Color::Red);
+        PRINTER.lock().write_char(' ').unwrap();
+    });
 }
 
 // Helper function for the `print` macro to prevent deadlocks
 pub fn print_args(args: fmt::Arguments) {
     use core::fmt::Write;
-    PRINTER.lock().write_fmt(args).unwrap();
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        PRINTER.lock().write_fmt(args).unwrap();
+    });
 }
 
 pub const BUFFER_WIDTH: usize = 80;
