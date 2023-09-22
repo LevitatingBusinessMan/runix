@@ -118,6 +118,15 @@ pub fn scroll(count: u8) {
             };
         }
     }
+
+    // Clear last row but retain color 
+    unsafe {
+        let color = (*VGA)[BUFFER_HEIGHT-2][BUFFER_WIDTH-2].read().color;
+        for col in 0..BUFFER_WIDTH  {
+            (*VGA)[BUFFER_HEIGHT-1][col].write(ScreenCharacter { character: 0x20, color })
+        }
+    }
+
     if count > 0 {
         scroll(count-1);
     }
