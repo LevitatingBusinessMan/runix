@@ -6,16 +6,16 @@
 // Also see https://docs.rs/pic8259/latest/src/pic8259/lib.rs.html#1-186
 
 /// Interrupt index for master PIC
-const PIC1_OFFSET: u8 = 0x20;
+pub(super) const PIC1_OFFSET: u8 = 0x20;
 /// Interrupt index for slave PIC
-const PIC2_OFFSET: u8 = 0x28; 
+pub(super) const PIC2_OFFSET: u8 = 0x28; 
 
 use x86_64::instructions::port::{Port, PortWriteOnly};
 use crate::io_wait;
 
 struct PIC {
-    command: PortWriteOnly<u16>,
-    data: Port<u16>,
+    command: PortWriteOnly<u8>,
+    data: Port<u8>,
 }
 
 static mut PIC1: PIC = PIC {command: PortWriteOnly::new(0x20), data: Port::new(0x21)};
@@ -44,9 +44,9 @@ pub fn init_pic() {
         io_wait!();
 
         // Tell the PICs what offsets to use
-        PIC1.data.write(PIC1_OFFSET as u16);
+        PIC1.data.write(PIC1_OFFSET);
         io_wait!();
-        PIC2.data.write(PIC2_OFFSET as u16);
+        PIC2.data.write(PIC2_OFFSET);
         io_wait!();
 
         // Tell master to use line 4

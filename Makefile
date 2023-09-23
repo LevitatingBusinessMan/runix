@@ -19,7 +19,7 @@ clean:
 	rm -rf *.o *.bin runix.iso isofiles
 
 run:
-	qemu-system-x86_64 -cdrom runix.iso -no-shutdown -no-reboot -d int
+	qemu-system-x86_64 -cdrom runix.iso -no-shutdown -no-reboot
 
 debug:
-	qemu-system-x86_64 -cdrom runix.iso -no-shutdown -no-reboot -d int -s -S
+	qemu-system-x86_64 -cdrom runix.iso -no-shutdown -no-reboot -s -S
