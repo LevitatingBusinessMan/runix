@@ -85,7 +85,9 @@ pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
         }
     }
 
-    loop{}
+    loop {
+        x86_64::instructions::hlt();
+    }
 }
 
 /**

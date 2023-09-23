@@ -33,6 +33,7 @@ pub fn init_idt() {
 pub fn init() {
     init_idt();
     pic8259::init_pic();
+    crate::io_wait!();
     x86_64::instructions::interrupts::enable();
 }
 
@@ -44,8 +45,8 @@ fn generic_exception_handler(stack_frame: InterruptStackFrame, index: u8, err_co
 }
 
 fn generic_interrupt_handler(_stack_frame: InterruptStackFrame, index: u8, _err_code : Option<u64>) {
-    wprintln!("Unimplemented interrupt {:#x}", index);
     pic8259::send_eoi(index);
+    wprintln!("Unimplemented interrupt {:#x}", index);
 }
 
 extern "x86-interrupt" fn double_fault_handler(stack_frame: InterruptStackFrame, err_code : u64) -> ! {
