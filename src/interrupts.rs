@@ -10,6 +10,7 @@ use x86_64::set_general_handler;
 use spin::Once;
 use crate::gdt;
 pub mod pic8259;
+pub mod keyboard;
 
 /// Statically allocated IDT
 // Make sure you have enough stack size for this
@@ -28,6 +29,7 @@ pub fn init_idt() {
         double_fault_entry.set_stack_index(gdt::DOUBLE_FAULT_IST_INDEX);
     }
     idt[Timer as usize].set_handler_fn(timer);
+    idt[Keyboard as usize].set_handler_fn(keyboard::handler);
     IDT.call_once(|| idt);
     IDT.get().unwrap().load();
 }
@@ -41,7 +43,8 @@ pub fn init() {
 
 #[repr(u8)]
 enum InterruptIndex {
-    Timer = pic8259::PIC1_OFFSET
+    Timer = pic8259::PIC1_OFFSET,
+    Keyboard
 }
 
 // There is an enum with exception numbers:
