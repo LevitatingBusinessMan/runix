@@ -18,6 +18,7 @@ struct PIC {
     data: Port<u8>,
 }
 
+// The proven best way to prevent deadlocks is by not having locks am I right
 static mut PIC1: PIC = PIC {command: PortWriteOnly::new(0x20), data: Port::new(0x21)};
 static mut PIC2: PIC = PIC {command: PortWriteOnly::new(0xa0), data: Port::new(0xa1)};
 

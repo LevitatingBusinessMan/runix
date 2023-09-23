@@ -41,6 +41,15 @@ macro_rules! io_wait {
     };
 }
 
+#[macro_export]
+macro_rules! hlt_loop {
+    () => {
+        loop {
+            x86_64::instructions::hlt();
+        }
+    };
+}
+
 #[no_mangle]
 // https://en.wikipedia.org/wiki/VGA_text_mode
 #[allow(improper_ctypes_definitions)]
@@ -85,9 +94,8 @@ pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
         }
     }
 
-    loop {
-        x86_64::instructions::hlt();
-    }
+    hlt_loop!();
+
 }
 
 /**
