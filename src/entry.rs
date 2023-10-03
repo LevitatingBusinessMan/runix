@@ -19,6 +19,7 @@ mod gdt;
 
 static WELCOME_STRING :&'static str = "Welcome to Runix!";
 
+use interrupts::keyboard;
 use vga::Color;
 use multiboot::BootInformation;
 use spin::Once;
@@ -94,7 +95,15 @@ pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
         }
     }
 
-    hlt_loop!();
+    let mut kr = keyboard::KeyReader::new();
+    loop {
+        let key = kr.get_key();
+        if let Ok(c) = <keyboard::ps2::KeyCode as TryInto<char>>::try_into(key) {
+            print!("{}", c);
+        }
+    }
+
+    //hlt_loop!();
 
 }
 

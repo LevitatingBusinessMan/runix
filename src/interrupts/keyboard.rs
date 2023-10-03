@@ -4,17 +4,19 @@ use x86_64::instructions::port::PortReadOnly;
 use x86_64::structures::idt::InterruptStackFrame;
 use spin::RwLock;
 
+use self::ps2::KeyCode;
+
 use super::pic8259;
 use super::Keyboard;
 
 const PS2: PortReadOnly<u8> = PortReadOnly::new(0x60);
 
 struct KeyBuffer {
-    buffer: [char; 256],
+    buffer: [KeyCode; 256],
     len: usize,
 }
 
-static KEYBUFFER: RwLock<KeyBuffer> = RwLock::new(KeyBuffer {buffer: ['\0'; 256], len: 0});
+static KEYBUFFER: RwLock<KeyBuffer> = RwLock::new(KeyBuffer {buffer: [KeyCode::Unknown; 256], len: 0});
 
 // I should not be able to receive keyboard interrupts during
 // the handling of a keyboard interrupt. So a deadlock should not occur.
@@ -23,22 +25,51 @@ pub(super) extern "x86-interrupt" fn handler(_stack_frame: InterruptStackFrame) 
     let scancode = unsafe {PS2.read()};
     if let Some(keyevent) = ps2::decode_scancode(scancode) {
         if keyevent.state == ps2::State::Press {
-            if let Ok(c) = keyevent.key.try_into() {
-                print!("{}", c);
-                let mut kb = KEYBUFFER.write();
-                let len = kb.len;
-                kb.buffer[len] = c;
-                kb.len += 1;
-                if kb.len >= kb.buffer.len() {
-                    kb.len = 0;
-                }
+            let mut kb = KEYBUFFER.write();
+            let len = kb.len;
+            kb.buffer[len] = keyevent.key;
+            kb.len += 1;
+            if kb.len >= kb.buffer.len() {
+                kb.len = 0;
             }
         }
     }
     pic8259::send_eoi(Keyboard as u8);
 }
 
-mod ps2 {
+/// For reading keystrokes
+pub struct KeyReader {
+    /// Index into the global keybuffer
+    index: usize,
+}
+
+impl KeyReader {
+    pub fn new() -> Self {
+        Self {index: 0}
+    }
+    /// Try to get a key immediately
+    pub fn try_key(&mut self) -> Option<KeyCode> {
+        let kb = KEYBUFFER.read();
+        if kb.len > self.index {
+            self.index += 1;
+            if self.index >= kb.buffer.len() {
+                self.index = 0;
+            }
+            Some(kb.buffer[self.index-1])
+        } else {
+            None
+        }
+    }
+    /// Waits for a key using a hlt loop
+    pub fn get_key(&mut self) -> KeyCode {
+        loop {
+            if let Some(key) = self.try_key() { return key; }
+            x86_64::instructions::hlt();
+        }
+    }
+}
+
+pub mod ps2 {
     use bit_field::BitField;
     use num_enum::TryFromPrimitive;
 
@@ -75,7 +106,7 @@ mod ps2 {
     }
 
     /// Using scancode set 1
-    #[derive(Clone, TryFromPrimitive, PartialEq)]
+    #[derive(Clone, Copy, TryFromPrimitive, PartialEq)]
     #[repr(u8)]
     pub enum KeyCode {
         Escape = 0x1,
