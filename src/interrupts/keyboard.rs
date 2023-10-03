@@ -29,6 +29,9 @@ pub(super) extern "x86-interrupt" fn handler(_stack_frame: InterruptStackFrame) 
                 let len = kb.len;
                 kb.buffer[len] = c;
                 kb.len += 1;
+                if kb.len >= kb.buffer.len() {
+                    kb.len = 0;
+                }
             }
         }
     }
@@ -38,6 +41,20 @@ pub(super) extern "x86-interrupt" fn handler(_stack_frame: InterruptStackFrame) 
 mod ps2 {
     use bit_field::BitField;
     use num_enum::TryFromPrimitive;
+
+    pub struct KeyEvent {
+        pub state: State,
+        pub key: KeyCode,
+    }
+
+    pub fn decode_scancode(scancode: ScanCode) -> Option<KeyEvent> {
+        let state = State::from(scancode);
+        let key = KeyCode::try_from(*scancode.clone().set_bit(7, false)).unwrap_or(KeyCode::Unknown);
+        if key == KeyCode::Unknown {
+            wprintln!("Unknown scancode {:#x} {:#x}", scancode, scancode.clone().set_bit(7, false));
+        }
+        Some(KeyEvent {state, key})
+    }
 
     //pub struct ScanCode (pub u8);
     pub type ScanCode = u8;
@@ -58,7 +75,7 @@ mod ps2 {
     }
 
     /// Using scancode set 1
-    #[derive(Clone, TryFromPrimitive)]
+    #[derive(Clone, TryFromPrimitive, PartialEq)]
     #[repr(u8)]
     pub enum KeyCode {
         Escape = 0x1,
@@ -146,20 +163,10 @@ mod ps2 {
         NumPadPeriod = 0x53,
         F11 = 0x57,
         F12 = 0x58,
+        Unknown,
     }
 
-
-    pub struct KeyEvent {
-        pub state: State,
-        pub key: KeyCode,
-    }
-
-    pub fn decode_scancode(scancode: ScanCode) -> Option<KeyEvent> {
-        let state = State::from(scancode);
-        let key = KeyCode::try_from(*scancode.clone().set_bit(7, false)).ok()?;
-        Some(KeyEvent {state, key})
-    }
-
+    /// Get a character from the key if possible
     impl TryFrom<KeyCode> for char {
         type Error = ();
 
@@ -177,7 +184,7 @@ mod ps2 {
                 KeyCode::Zero => Ok('0'),
                 KeyCode::Minus => Ok('-'),
                 KeyCode::Equals => Ok('='),
-                KeyCode::Tab => Ok('\t'),
+                //KeyCode::Tab => Ok('\t'),
                 KeyCode::Q => Ok('q'),
                 KeyCode::W => Ok('w'),
                 KeyCode::E => Ok('e'),
