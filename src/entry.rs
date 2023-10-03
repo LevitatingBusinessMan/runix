@@ -117,3 +117,12 @@ pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
 fn stack_overflow() {
     stack_overflow()
 }
+
+/**
+ * Probably causes a page fault
+ */
+#[allow(dead_code)]
+fn page_fault() {
+    let ptr = 0xdeadc0de as *mut u8;
+    unsafe { *ptr = 69; }
+}

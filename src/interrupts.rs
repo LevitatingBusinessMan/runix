@@ -5,7 +5,7 @@
  */
 // https://github.com/rust-lang/rust/pull/39832
 
-use x86_64::structures::idt::{InterruptStackFrame, InterruptDescriptorTable, ExceptionVector, ExceptionVector::*};
+use x86_64::structures::idt::{InterruptStackFrame, InterruptDescriptorTable, ExceptionVector, ExceptionVector::*, PageFaultErrorCode};
 use x86_64::set_general_handler;
 use spin::Once;
 use crate::gdt;
@@ -23,6 +23,7 @@ pub fn init_idt() {
     set_general_handler!(&mut idt, generic_interrupt_handler);
     set_general_handler!(&mut idt, generic_exception_handler, 0..0x20);
     idt.breakpoint.set_handler_fn(breakpoint_handler);
+    idt.page_fault.set_handler_fn(page_fault_handler);
     let double_fault_entry = idt.double_fault.set_handler_fn(double_fault_handler);
     unsafe {
         // register the double fault handler with a clean stack
@@ -65,6 +66,11 @@ extern "x86-interrupt" fn double_fault_handler(stack_frame: InterruptStackFrame,
 
 extern "x86-interrupt" fn breakpoint_handler(stack_frame: InterruptStackFrame) {
     exprintln!("HARDWARE BREAKPOINT\n{:?}", stack_frame);
+}
+
+extern "x86-interrupt" fn page_fault_handler(stack_frame: InterruptStackFrame, error_code: PageFaultErrorCode) {
+    let addr = x86_64::registers::control::Cr2::read();
+    panic!("PAGE FAULT {:#?} at {:#x}\n{:?}", error_code, addr, stack_frame);
 }
 
 extern "x86-interrupt" fn timer(_stack_frame: InterruptStackFrame) {
