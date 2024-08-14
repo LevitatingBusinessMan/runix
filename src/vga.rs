@@ -2,7 +2,7 @@
 
 // https://en.wikipedia.org/wiki/VGA_text_mode
 // https://en.wikipedia.org/wiki/Code_page_437
-use core::fmt::{self, Write};
+use core::fmt;
 use volatile::Volatile;
 use spin::{Mutex, Lazy};
 
@@ -62,6 +62,7 @@ macro_rules! exprint {
 }
 
 pub fn print_err(err: &'static str) {
+    use fmt::Write;
     x86_64::instructions::interrupts::without_interrupts(|| {
         PRINTER.lock().print_chars(err, Color::Yellow, Color::Red);
         PRINTER.lock().write_char(' ').unwrap();
@@ -70,7 +71,7 @@ pub fn print_err(err: &'static str) {
 
 // Helper function for the `print` macro to prevent deadlocks
 pub fn print_args(args: fmt::Arguments) {
-    use core::fmt::Write;
+    use fmt::Write;
     x86_64::instructions::interrupts::without_interrupts(|| {
         PRINTER.lock().write_fmt(args).unwrap();
     });

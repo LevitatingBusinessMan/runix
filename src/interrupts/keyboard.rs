@@ -106,7 +106,7 @@ pub mod ps2 {
     }
 
     /// Using scancode set 1
-    #[derive(Clone, Copy, TryFromPrimitive, PartialEq)]
+    #[derive(Clone, Copy, TryFromPrimitive, PartialEq, Debug)]
     #[repr(u8)]
     pub enum KeyCode {
         Escape = 0x1,
@@ -229,6 +229,7 @@ pub mod ps2 {
                 KeyCode::LeftBracket => Ok('['),
                 KeyCode::RightBracket => Ok(']'),
                 KeyCode::Enter => Ok('\n'),
+                KeyCode::Space => Ok(' '),
                 KeyCode::A => Ok('a'),
                 KeyCode::S => Ok('s'),
                 KeyCode::D => Ok('d'),

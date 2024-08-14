@@ -286,8 +286,7 @@ impl Iterator for TagIter {
 impl BootInformation {
     pub fn load(ptr: *const BootInformation) -> &'static Self {
         let total_size = unsafe {*(ptr as *const u32)};
-        let mbi: &BootInformation = unsafe {&*ptr::from_raw_parts(ptr as *const (), total_size as usize)};
-        mbi
+        unsafe {&*ptr::from_raw_parts(ptr as *const (), total_size as usize)}
     }
 
     /// Iterate over the tags
