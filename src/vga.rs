@@ -145,13 +145,7 @@ impl Printer {
         if character == '\n' as u8 {
             self.row += 1;
             self.col = 0;
-            return;
         }
-
-        let sc = ScreenCharacter {
-            color:(fg,bg).into(),
-            character,
-        };
 
         if self.col == BUFFER_WIDTH {
             self.col = 0;
@@ -162,6 +156,13 @@ impl Printer {
             scroll(0);
             self.row -=1;
         }
+
+        if character == '\n' as u8 { return; }
+
+        let sc = ScreenCharacter {
+            color:(fg,bg).into(),
+            character,
+        };
 
         // Write the word
         unsafe {(*VGA)[self.row][self.col].write(sc);};

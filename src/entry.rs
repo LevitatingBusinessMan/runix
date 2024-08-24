@@ -8,6 +8,7 @@
 #![feature(ptr_from_ref)]
 #![feature(asm_const)]
 #![feature(exclusive_range_pattern)]
+#![feature(const_trait_impl)]
 
 mod panic;
 #[macro_use]
@@ -102,7 +103,7 @@ pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
     loop {
         let key = kr.get_key();
         if let Ok(c) = <keyboard::ps2::KeyCode as TryInto<char>>::try_into(key) {
-            print!("{}", c);
+           print!("{}", c);
         }
     }
 

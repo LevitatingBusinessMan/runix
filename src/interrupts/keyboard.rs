@@ -70,19 +70,34 @@ impl KeyReader {
 }
 
 pub mod ps2 {
+    use core::sync::atomic::{Ordering, AtomicBool};
     use bit_field::BitField;
     use num_enum::TryFromPrimitive;
 
+    #[derive(Debug)]
     pub struct KeyEvent {
         pub state: State,
         pub key: KeyCode,
     }
 
     pub fn decode_scancode(scancode: ScanCode) -> Option<KeyEvent> {
+        // If the last scancode was 0xE0 then LAST_MULTIMEDIA is set
+        // which will cause the first bit to be set when looking up [KeyCode]
+        // (normally the fist bit is reserved for state)
+        static LAST_MULTIMEDIA: AtomicBool = AtomicBool::new(false);
         let state = State::from(scancode);
-        let key = KeyCode::try_from(*scancode.clone().set_bit(7, false)).unwrap_or(KeyCode::Unknown);
+        let key = KeyCode::try_from(*scancode.clone()
+                            .set_bit(7, LAST_MULTIMEDIA.load(Ordering::Relaxed)))
+                            .unwrap_or(KeyCode::Unknown);
         if key == KeyCode::Unknown {
             wprintln!("Unknown scancode {:#x} {:#x}", scancode, scancode.clone().set_bit(7, false));
+        }
+
+        if key == KeyCode::MultiMedia {
+            LAST_MULTIMEDIA.store(true, Ordering::Relaxed);
+            return None;
+        } else {
+            LAST_MULTIMEDIA.store(false, Ordering::Relaxed);
         }
         Some(KeyEvent {state, key})
     }
@@ -90,13 +105,14 @@ pub mod ps2 {
     //pub struct ScanCode (pub u8);
     pub type ScanCode = u8;
 
-    #[derive(PartialEq)]
+    #[derive(PartialEq, Debug)]
     pub enum State {
         Press,
         Release
     }
 
     impl From<ScanCode> for State {
+        // get a state based on the 7th bit
         fn from(value: ScanCode) -> Self {
             match value.get_bit(7) {
                 true => Self::Release,
@@ -106,6 +122,7 @@ pub mod ps2 {
     }
 
     /// Using scancode set 1
+    /// https://wiki.osdev.org/PS/2_Keyboard#Scan_Code_Set_1
     #[derive(Clone, Copy, TryFromPrimitive, PartialEq, Debug)]
     #[repr(u8)]
     pub enum KeyCode {
@@ -194,6 +211,18 @@ pub mod ps2 {
         NumPadPeriod = 0x53,
         F11 = 0x57,
         F12 = 0x58,
+        /// this is really 0xE0, the 7th bit is always set, there should be no conflict using 0x60
+        MultiMedia = 0x60,
+
+        /* CUSTOM KEYCODES */
+        /* these keycodes starting at 0x80 (first bit set) */
+        /* are not part of any spec, the first bit is normally used to indicate state */
+        /* however we use them to assign keys that are prefixed with 0XE0 */
+        /* that means that to check for these, just use TryFromPrimitive normally but with the first bit set */
+
+        PageUp = 0xC9,
+        PageDown = 0xD1,
+
         Unknown,
     }
 
