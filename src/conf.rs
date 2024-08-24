@@ -1,5 +1,5 @@
-use spin::{Lazy, RwLock};
-pub static CONFIG: Lazy<RwLock<Config>> = Lazy::new(|| RwLock::new(Config::default()));
+use spin::Once;
+pub static CONFIG: Once<Config> = Once::new();
 
 /// The Runix configuration
 #[derive(Clone, Debug)]
@@ -60,7 +60,7 @@ pub(super) fn parse(args: &str) {
         let as_str = core::str::from_utf8(&lexeme[0..len]).expect("Invalid character in lexeme");
 
         match as_str {
-            "not" => {
+            "no" => {
                 lexeme = [0; 64];
                 len = 0;
                 negafier = !negafier
@@ -81,7 +81,5 @@ pub(super) fn parse(args: &str) {
         }
     }
 
-    // save
-    *CONFIG.write() = config;
-
+    CONFIG.call_once(|| config);
 }

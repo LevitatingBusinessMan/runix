@@ -71,11 +71,11 @@ pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
         }
     }
 
-    if conf::CONFIG.read().welcome {
+    if conf::CONFIG.get().unwrap().welcome {
         vga::print_at(vga::BUFFER_WIDTH/2 - WELCOME_STRING.len()/2, 12, WELCOME_STRING.as_bytes(), Color::Black, Color::White);
     }
 
-    if conf::CONFIG.read().print_info {
+    if conf::CONFIG.get().unwrap().print_info {
         println!("Multiboot at: {:#7x?} - {:#7x?}", mbi_pointer, mbi_pointer as *const () as usize + mbi.total_size as usize);
         let elf = mbi.elf_symbols().next().expect("No ELF symbols");
     
