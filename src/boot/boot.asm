@@ -236,7 +236,7 @@ long_mode:
 section .bss
 ; Align with page size
 align 4096
-; Stack
+; Stack (16 pages and a guard page)
 guard:
     resb 4096
 stack_bottom:
@@ -252,3 +252,14 @@ PDT:
     resb 4096
 PT:
     resb 4096
+
+; EARLY BOOT LAYOUT
+; link.ld shows the ELF layout.
+; The first megabyte of the ELF
+; is configured to have 1MiB of null bytes.
+; GRUB maps this ELF at the top of memory.
+; This .bss section is created somewhere with a page table
+; mapping the first 16MiB of memory.
+; Also in the .bss section is 16 pages (64KiB)
+; reserved for the stack.
+; With a non-present guard page on top.
