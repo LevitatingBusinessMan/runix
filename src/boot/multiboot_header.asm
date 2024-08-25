@@ -4,7 +4,7 @@
 ; 0			u32			magic
 ; 4			u32			architecture
 ; 8			u32			header_length
-; 12			u32			checksum
+; 12		u32			checksum
 ; 16-XX		u32			tags
 
 

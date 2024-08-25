@@ -17,21 +17,24 @@ pub struct BootInformation {
 
 /// See man elf(5)
 // https://en.wikipedia.org/wiki/Executable_and_Linkable_Format
-#[repr(align(4))]
+#[repr(C)]
 pub struct ElfSymbol {
-    pub num: u16,
-    pub entsize: u16,
-    pub shndx: u16,
-    _reserved: u16,
+    pub num: u32,
+    pub entsize: u32,
+    pub shndx: u32,
+    // _reserved: u16,
     pub section_headers: [ElfSection],
 }
 
 impl core::fmt::Debug for ElfSymbol {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let num = self.num;
+        let entsize = self.entsize;
+        let shndx = self.shndx;
         f.debug_struct("ElfSymbol")
-        .field("num", &self.num)
-        .field("entsize", &self.entsize)
-        .field("shndx", &self.shndx)
+        .field("num", &num)
+        .field("entsize", &entsize)
+        .field("shndx", &shndx)
         .finish()
     }
 }
@@ -71,23 +74,41 @@ pub struct ElfSection {
     /// Contains extra information about the section. This field is used for several purposes, depending on the type of section. 
     pub info: u32,
     /// Contains the required alignment of the section. This field must be a power of two. 
-    pub addr_align: u64,
+    pub addr_align: usize,
     /// Contains the size, in bytes, of each entry, for sections that contain fixed-size entries. Otherwise, this field contains zero. 
     pub entsize: usize,
+}
+
+impl ElfSection {
+    /// Attempt to get the name of this section
+    /// by finding the .shstrtab section
+    pub fn get_name(&self, elf: &'static ElfSymbol) -> Option<&'static str> {
+        // let x = addr_of!(elf.section_headers) as *const () as usize + elf.shndx as usize;
+        // println!("{}", x);
+        // let sh: &ElfSection = unsafe { &*ptr::from_raw_parts(x as *const (), ()) };
+        // println!("{:?}", sh);
+        // for sh in elf.sections() {
+        //     // if sh.type_ == 0x3 {
+        //     //     //0x0057de00
+        //     //     //0x0057dee0
+        //     //     // println!("{:?}", sh);
+        //     //     unsafe { return CStr::from_ptr((0x0057de00 + self.name as usize) as *const i8).to_str().ok() }
+        //     // }
+        // }
+        None
+    }
 }
 
 impl Iterator for ElfSectionIter {
     type Item = &'static ElfSection;
 
     fn next(&mut self) -> Option<Self::Item> {
-        // extra 4 because of weird padding
-        // I think I can use shndx like this to correctly get to the first section?
-        let offset = self.symbol.shndx as usize + 4;
+        let offset = 64;
 
         if self.i + 1 >= self.symbol.num as usize {
             return None;
         }
-        
+
         let addr = addr_of!(self.symbol.section_headers) as *const () as usize + offset + self.i * core::mem::size_of::<ElfSection>() ;
         self.i += 1;
         unsafe {
@@ -165,6 +186,7 @@ pub struct MemoryMapEntry {
     _reserved: u32,
 }
 
+#[repr(C)]
 pub struct APMTable {
     pub version: u16,
     pub cseg: u16,
@@ -245,7 +267,7 @@ impl Iterator for TagIter {
             },
             9 => {
                 Some(Tag::ElfSymbol(unsafe {
-                    &*ptr::from_raw_parts(addr as *const (), size - 8)
+                    &*ptr::from_raw_parts((addr) as *const (), size)
                 }))
             },
             10 => {

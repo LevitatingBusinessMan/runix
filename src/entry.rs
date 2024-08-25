@@ -9,6 +9,7 @@
 #![feature(asm_const)]
 #![feature(exclusive_range_pattern)]
 #![feature(const_trait_impl)]
+#![feature(ascii_char)]
 
 mod panic;
 #[macro_use]
@@ -17,6 +18,8 @@ mod multiboot;
 mod conf;
 mod interrupts;
 mod gdt;
+mod kdebug;
+mod debug;
 
 static WELCOME_STRING :&'static str = "Welcome to Runix!";
 
@@ -38,9 +41,7 @@ macro_rules! hbreak {
 /// Useful for implementing a small delay for PIC remapping on old hardware or generally as a simple but imprecise wait.
 #[macro_export]
 macro_rules! io_wait {
-    () => {
-        unsafe {x86_64::instructions::port::Port::new(0x80).write(0 as u8)};
-    };
+    () => { x86_64::instructions::port::Port::new(0x80).write(0 as u8) };
 }
 
 #[macro_export]
@@ -62,7 +63,7 @@ pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
 
     let mbi = BootInformation::load(mbi_pointer);
 
-    //MBI.call_once(|| mbi);
+    MBI.call_once(|| mbi);
 
     conf::parse(mbi.boot_command_line().expect("Could not get cmdline").to_str().unwrap());
 
@@ -80,11 +81,11 @@ pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
         println!("Multiboot at: {:#7x?} - {:#7x?}", mbi_pointer, mbi_pointer as *const () as usize + mbi.total_size as usize);
         let elf = mbi.elf_symbols().next().expect("No ELF symbols");
     
-        println!(
-            "Kernel at: {:#x?} - {:#x?}",
-            elf.sections().map(|s| s.addr).min().unwrap(),
-            elf.sections().map(|s| s.addr + s.size).max().unwrap()
-        );
+        // println!(
+        //     "Kernel at: {:#x?} - {:#x?}",
+        //     elf.sections().map(|s| s.addr).min().unwrap(),
+        //     elf.sections().map(|s| s.addr + s.size).max().unwrap()
+        // );
     
         let bootloader_name = mbi.bootloader_name().unwrap();    
         println!("Booted from: {}", &bootloader_name.to_str().unwrap());
@@ -99,15 +100,7 @@ pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
         }
     }
 
-    let mut kr = keyboard::KeyReader::new();
-    loop {
-        let key = kr.get_key();
-        if let Ok(c) = <keyboard::ps2::KeyCode as TryInto<char>>::try_into(key) {
-           print!("{}", c);
-        }
-    }
-
-    //hlt_loop!();
+    kdebug::kdebug();
 
 }
 

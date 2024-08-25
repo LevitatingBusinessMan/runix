@@ -106,11 +106,9 @@ impl From<(Color, Color)> for ColorAttribute {
 
 type VGABuffer = [[Volatile<ScreenCharacter>; BUFFER_WIDTH]; BUFFER_HEIGHT];
 
-/// Prints black on white from first row
-/// To specify location and color see `ColoredPrinter`
 pub struct Printer {
-    col: usize,
-    row: usize,
+    pub col: usize,
+    pub row: usize,
 }
 
 // Move all lines up
