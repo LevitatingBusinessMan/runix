@@ -1,13 +1,19 @@
 ENTRY(start)
 
+/* also see ld -verbose */
+
 SECTIONS {
 	/* Skip the first megabyte */
 	. = 1M;
 
     .boot : { *(.multiboot_header) }
 
-    .data : { *(.data) }
+    .rodata : { *(.rodata .rodata.* .gnu.linkonce.r.*) }
 
-    .text : { *(.text) }
+    .data : { *(.data .data.*) }
+
+    .bss : { *(.bss .bss.*) }
+
+    .text : { *(.text .text.*) }
 
 }
