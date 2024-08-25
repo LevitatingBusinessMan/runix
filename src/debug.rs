@@ -30,6 +30,31 @@ pub fn print_memoryareas() {
     }
 }
 
+#[inline(always)]
 pub fn print_registers() {
-    
+    let rip = x86_64::registers::read_rip();
+    let (PML4T, _flags) = x86_64::registers::control::Cr3::read();
+    let rflags = x86_64::registers::rflags::read();
+    println!("PML4T at {:#x?}", PML4T);
+    println!("RFLAGS: {:?}", rflags);
+    println!("RIP: {:x?}", rip);
 }
+
+/**
+ * Overflows the stack for testing purposes
+ */
+#[allow(dead_code)]
+#[allow(unconditional_recursion)]
+pub fn stack_overflow() {
+    stack_overflow()
+}
+
+/**
+ * Probably causes a page fault
+ */
+#[allow(dead_code)]
+pub fn page_fault() {
+    let ptr = 0xdeadc0de as *mut u8;
+    unsafe { *ptr = 69; }
+}
+

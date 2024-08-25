@@ -1,6 +1,6 @@
 //! A shell-like interface to debug the kernel with
 
-use core::ptr::slice_from_raw_parts;
+use core::ptr::{addr_of, slice_from_raw_parts};
 
 use crate::{debug, keyboard, vga};
 
@@ -27,8 +27,10 @@ pub fn kdebug() -> ! {
                 }
             } else {
                 if key == keyboard::ps2::KeyCode::Backspace {
-                    index -= 1;
-                    vga::PRINTER.lock().col -= 1;
+                    if index > 0 {
+                        index -= 1;
+                        vga::PRINTER.lock().col -= 1;
+                    }
                 }
             }
         }
@@ -41,11 +43,24 @@ fn handle_cmd(cmd: &[u8]) {
             println!("List of commands:");
             println!("sections");
             println!("memory");
-            println!("registers")
+            println!("registers");
+            println!("mbi");
+            println!("stackoverflow");
+            println!("pagefault");
         },
         b"sections" => debug::print_elfsections(),
         b"memory" => debug::print_memoryareas(),
         b"registers" => debug::print_registers(),
+        b"mbi" => {
+            let mbi = crate::MBI.get().unwrap();
+            println!("Multiboot at: {:#7x?} - {:#7x?}", addr_of!(**mbi), addr_of!(**mbi) as *const () as usize + mbi.total_size as usize);
+        },
+        b"stackoverflow" => {
+            debug::stack_overflow();
+        },
+        b"pagefault" => {
+            debug::page_fault();
+        },
         _ => {
             println!("Unknown command");
         }
