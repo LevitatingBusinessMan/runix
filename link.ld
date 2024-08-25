@@ -8,7 +8,7 @@ SECTIONS {
 
     .boot : { *(.multiboot_header) }
 
-    .rodata : { *(.rodata .rodata.* .gnu.linkonce.r.*) }
+    .rodata : { *(.rodata .rodata.*) }
 
     .data : { *(.data .data.*) }
 
