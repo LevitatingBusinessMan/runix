@@ -78,26 +78,20 @@ pub extern fn runix(mbi_pointer: *const BootInformation) -> ! {
     }
 
     if conf::CONFIG.get().unwrap().print_info {
-        println!("Multiboot at: {:#7x?} - {:#7x?}", mbi_pointer, mbi_pointer as *const () as usize + mbi.total_size as usize);
-        let elf = mbi.elf_symbols().next().expect("No ELF symbols");
-    
-        // println!(
-        //     "Kernel at: {:#x?} - {:#x?}",
-        //     elf.sections().map(|s| s.addr).min().unwrap(),
-        //     elf.sections().map(|s| s.addr + s.size).max().unwrap()
-        // );
-    
         let bootloader_name = mbi.bootloader_name().unwrap();    
         println!("Booted from: {}", &bootloader_name.to_str().unwrap());
     
-        let (PML4T, flags) = x86_64::registers::control::Cr3::read();
-        println!("PML4T at {:#x?}", PML4T);
-
-        println!("Memory areas: ");
-        let memory_map = mbi.memory_map().unwrap();
-        for entry in &memory_map.entries {
-            println!("    base: {:#14x}   size: {:#14x} (type {:#x})", entry.base_addr, entry.length, entry.type_)
-        }
+        println!("Multiboot at: {:#7x?} - {:#7x?}", mbi_pointer, mbi_pointer as *const () as usize + mbi.total_size as usize);
+        let elf = mbi.elf_symbols().next().expect("No ELF symbols");
+    
+        println!(
+            "Kernel at: {:#x?} - {:#x?}",
+            elf.sections().into_iter().map(|s| s.addr).min().unwrap(),
+            elf.sections().into_iter().map(|s| s.addr + s.size).max().unwrap()
+        );
+    
+        // let (PML4T, flags) = x86_64::registers::control::Cr3::read();
+        // println!("PML4T at {:#x?}", PML4T);
     }
 
     kdebug::kdebug();

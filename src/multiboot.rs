@@ -40,20 +40,15 @@ impl core::fmt::Debug for ElfSymbol {
 }
 
 impl ElfSymbol {
-    pub fn sections(&'static self) -> impl Iterator<Item = &'static ElfSection> {
-        ElfSectionIter {symbol: &self, i: 0}
+    pub fn sections(&'static self) -> &[ElfSection] {
+        unsafe { ptr::slice_from_raw_parts(self.section_headers.as_ptr(), self.num as usize).as_ref().unwrap() }
     }
-}
-
-pub struct ElfSectionIter {
-    symbol: &'static ElfSymbol,
-    i: usize,
 }
 
 // This is padded wrong or something (not at an 8th)
 // https://www.gnu.org/software/grub/manual/multiboot2/multiboot.html#C-structure-members-alignment-and-padding-consideration
 #[repr(packed)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 /// See man elf(5)
 // https://en.wikipedia.org/wiki/Executable_and_Linkable_Format#Section_header
 pub struct ElfSection {
@@ -83,36 +78,11 @@ impl ElfSection {
     /// Attempt to get the name of this section
     /// by finding the .shstrtab section
     pub fn get_name(&self, elf: &'static ElfSymbol) -> Option<&'static str> {
-        // let x = addr_of!(elf.section_headers) as *const () as usize + elf.shndx as usize;
-        // println!("{}", x);
-        // let sh: &ElfSection = unsafe { &*ptr::from_raw_parts(x as *const (), ()) };
-        // println!("{:?}", sh);
-        // for sh in elf.sections() {
-        //     // if sh.type_ == 0x3 {
-        //     //     //0x0057de00
-        //     //     //0x0057dee0
-        //     //     // println!("{:?}", sh);
-        //     //     unsafe { return CStr::from_ptr((0x0057de00 + self.name as usize) as *const i8).to_str().ok() }
-        //     // }
-        // }
-        None
-    }
-}
-
-impl Iterator for ElfSectionIter {
-    type Item = &'static ElfSection;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let offset = 64;
-
-        if self.i + 1 >= self.symbol.num as usize {
-            return None;
-        }
-
-        let addr = addr_of!(self.symbol.section_headers) as *const () as usize + offset + self.i * core::mem::size_of::<ElfSection>() ;
-        self.i += 1;
-        unsafe {
-            return Some(&*ptr::from_raw_parts(addr as *const (), ()));
+        if elf.shndx > 0 && self.name > 0 {
+            let section = &elf.sections()[elf.shndx as usize];
+            unsafe { CStr::from_ptr((section.addr + self.name as usize) as *const i8).to_str().ok() }
+        } else {
+            None
         }
     }
 }

@@ -1,5 +1,7 @@
 //! A shell-like interface to debug the kernel with
 
+use core::ptr::slice_from_raw_parts;
+
 use crate::{debug, keyboard, vga};
 
 pub fn kdebug() -> ! {
@@ -37,25 +39,13 @@ fn handle_cmd(cmd: &[u8]) {
     match cmd {
         b"help" => {
             println!("List of commands:");
-            println!("elfsections");
-            println!("mbi");
+            println!("sections");
+            println!("memory");
+            println!("registers")
         },
-        b"elfsections" => {
-            let mbi = crate::MBI.get().unwrap();
-            let elf = mbi.elf_symbols().next().unwrap();
-            let addr = core::ptr::addr_of!(elf.num);
-
-            println!("{:#x?}", elf);
-            for i in 0..elf.num {
-                let x = elf.section_headers[i as usize].addr;
-                println!("{:x?}", x);
-            }
-
-            // for section in elf.sections() {
-            //     let x = section.addr;
-            //     //println!("{:x?}", x);
-            // }
-        },
+        b"sections" => debug::print_elfsections(),
+        b"memory" => debug::print_memoryareas(),
+        b"registers" => debug::print_registers(),
         _ => {
             println!("Unknown command");
         }
