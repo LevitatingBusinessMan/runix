@@ -2,7 +2,7 @@
 
 use core::ptr::{addr_of, slice_from_raw_parts};
 
-use crate::{debug, keyboard, vga};
+use crate::{debug, keyboard, pci, vga};
 
 pub fn kdebug() -> ! {
     let mut kr = keyboard::KeyReader::new();
@@ -47,6 +47,7 @@ fn handle_cmd(cmd: &[u8]) {
             println!("mbi");
             println!("stackoverflow");
             println!("pagefault");
+            println!("scanpci");
         },
         b"sections" => debug::print_elfsections(),
         b"memory" => debug::print_memoryareas(),
@@ -60,6 +61,9 @@ fn handle_cmd(cmd: &[u8]) {
         },
         b"pagefault" => {
             debug::page_fault();
+        },
+        b"scanpci" => {
+            pci::brute_force();
         },
         _ => {
             println!("Unknown command");

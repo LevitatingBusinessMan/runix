@@ -16,6 +16,7 @@ mod gdt;
 mod kdebug;
 mod debug;
 mod allocator;
+mod pci;
 
 static WELCOME_STRING :&'static str = "Welcome to Runix!";
 
