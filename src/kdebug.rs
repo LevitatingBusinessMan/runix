@@ -63,7 +63,7 @@ fn handle_cmd(cmd: &[u8]) {
             debug::page_fault();
         },
         b"scanpci" => {
-            pci::brute_force();
+            pci::scanner::brute_force();
         },
         _ => {
             println!("Unknown command");
