@@ -87,6 +87,7 @@ impl ElfSection {
     }
 }
 
+#[derive(Debug)]
 #[repr(C)]
 /// Image load base physical address.
 /// This tag contains image load base physical address. It is provided only if image has
@@ -95,6 +96,7 @@ pub struct ImageLoadBase {
     pub load_base_addr: u32,
 }
 
+#[derive(Debug)]
 #[repr(u32)]
 pub enum Tag {
     End = 0,
@@ -114,6 +116,7 @@ pub enum Tag {
     Unknown(u32, &'static [u8]),
 }
 
+#[derive(Debug)]
 #[repr(C)]
 pub struct FrameBufferInfo {
     pub framebuffer_addr: u64,
@@ -127,12 +130,14 @@ pub struct FrameBufferInfo {
     color_info: [u8],
 }
 
+#[derive(Debug)]
 #[repr(C)]
 pub struct BasicMemInfo {
     pub mem_lower: u32,
     pub mem_upper: u32,
 }
 
+#[derive(Debug)]
 #[repr(C)]
 pub struct BIOSBootDevice {
     pub biosdev: u32,
@@ -141,6 +146,7 @@ pub struct BIOSBootDevice {
 }
 
 
+#[derive(Debug)]
 #[repr(C)]
 pub struct MemoryMap {
     pub entry_size: u32,
@@ -148,6 +154,7 @@ pub struct MemoryMap {
     pub entries: [MemoryMapEntry],
 }
 
+#[derive(Debug)]
 #[repr(C)]
 pub struct MemoryMapEntry {
     pub base_addr: u64,
@@ -156,6 +163,7 @@ pub struct MemoryMapEntry {
     _reserved: u32,
 }
 
+#[derive(Debug)]
 #[repr(C)]
 pub struct APMTable {
     pub version: u16,

@@ -48,6 +48,7 @@ fn handle_cmd(cmd: &[u8]) {
             println!("stackoverflow");
             println!("pagefault");
             println!("scanpci");
+            println!("mbitags");
         },
         b"sections" => debug::print_elfsections(),
         b"memory" => debug::print_memoryareas(),
@@ -64,6 +65,12 @@ fn handle_cmd(cmd: &[u8]) {
         },
         b"scanpci" => {
             pci::scanner::brute_force();
+        },
+        b"mbitags" => {
+            let mbi = crate::MBI.get().unwrap();
+            for tag in mbi.tags() {
+                println!("{tag:?}");
+            }
         },
         _ => {
             println!("Unknown command");
