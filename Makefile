@@ -13,7 +13,7 @@ boot: src/boot/multiboot_header.asm src/boot/boot.asm
 	nasm -felf64 src/boot/boot.asm -o target/boot.o
 
 link: boot kernel
-	ld -n -o target/runix.elf -T link.ld target/multiboot_header.o target/boot.o target/x86-runix/debug/librunix.a
+	ld -n -o target/runix.elf -T link.ld target/multiboot_header.o target/boot.o target/x86_64-unknown-none/debug/librunix.a
 
 clean:
 	rm -rf *.o *.bin runix.iso isofiles
