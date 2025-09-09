@@ -30,6 +30,8 @@ pub fn kdebug() -> ! {
                     if index > 0 {
                         index -= 1;
                         vga::PRINTER.lock().col -= 1;
+                        print!(" "); // clear character
+                        vga::PRINTER.lock().col -= 1;
                     }
                 }
             }
@@ -49,6 +51,7 @@ fn handle_cmd(cmd: &[u8]) {
             println!("pagefault");
             println!("scanpci");
             println!("mbitags");
+            println!("clean");
         },
         b"sections" => debug::print_elfsections(),
         b"memory" => debug::print_memoryareas(),
@@ -71,6 +74,11 @@ fn handle_cmd(cmd: &[u8]) {
             for tag in mbi.tags() {
                 println!("{tag:?}");
             }
+        },
+        b"clear" => {
+            vga::clear();
+            vga::PRINTER.lock().col = 0;
+            vga::PRINTER.lock().row = 0;
         },
         _ => {
             println!("Unknown command");
