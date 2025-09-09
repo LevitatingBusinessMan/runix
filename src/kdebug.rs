@@ -58,7 +58,7 @@ fn handle_cmd(cmd: &[u8]) {
         b"registers" => debug::print_registers(),
         b"mbi" => {
             let mbi = crate::MBI.get().unwrap();
-            println!("Multiboot at: {:#7x?} - {:#7x?}", addr_of!(**mbi), addr_of!(**mbi) as *const () as usize + mbi.total_size as usize);
+            println!("Multiboot at: {:#7x?} - {:#7x?}", addr_of!(**mbi) as *const (), addr_of!(**mbi) as *const () as usize + mbi.total_size as usize);
         },
         b"stackoverflow" => {
             debug::stack_overflow();
