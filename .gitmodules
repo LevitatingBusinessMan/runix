@@ -1,0 +1,4 @@
+[submodule "Limine"]
+	path = Limine
+	url = https://codeberg.org/Limine/Limine
+	branch = v10.x-binary
