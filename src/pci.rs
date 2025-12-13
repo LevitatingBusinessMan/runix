@@ -1,16 +1,17 @@
 //!For working the PCI bus
 //https://wiki.osdev.org/PCI
-use x86_64::instructions::port::{PortReadOnly, PortWriteOnly};
+use x86_64::instructions::port::{PortWrite, PortRead};
 
-static mut CONFIG_ADDRESS: PortWriteOnly<u32> = PortWriteOnly::new(0xCF8);
-static mut CONFIG_DATA: PortReadOnly<u32> = PortReadOnly::new(0xCFC);
+// https://wiki.osdev.org/PCI#Configuration_Space_Access_Mechanism_#1
+const CONFIG_ADDRESS: u16 = 0xCF8;
+const CONFIG_DATA: u16 = 0xCFC;
 
 pub fn config_read(bus: u8, device: u8, func: u8, offset: u8) -> u16 {
     let address = 0x80000000_u32 | (bus as u32) << 16 | (device as u32) << 11 | (func as u32) << 8 | (offset & 0xFC) as u32;
-    unsafe { CONFIG_ADDRESS.write(address) };
+    unsafe { u32::write_to_port(CONFIG_ADDRESS, address) };
     // >> (offset & 2) * 8
     // should give us the first word of dword
-    return (unsafe { CONFIG_DATA.read() } >> (offset & 2) * 8) as u16;
+    return unsafe { u32::read_from_port(CONFIG_DATA) >> (offset & 2) * 8 } as u16
 }
 
 pub mod scanner {
@@ -42,8 +43,6 @@ pub mod scanner {
             println!("PCI Bus {bus:#x} Vendor {vendor:#x} Device {device:#x} Header {header_type:#x}");
         }
     }
-
-    
 
     pub fn brute_force() {
         for bus in 0..255 {
