@@ -1,1 +1,1 @@
-mod hex;
+pub mod hex;

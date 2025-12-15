@@ -119,12 +119,12 @@ pub enum Tag {
 #[derive(Debug)]
 #[repr(C)]
 pub struct FrameBufferInfo {
-    pub framebuffer_addr: u64,
-    pub framebuffer_pitch: u32,
-    pub framebuffer_width: u32,
-    pub framebuffer_height: u32,
-    pub framebuffer_bpp: u8,
-    pub framebuffer_type: u8,
+    pub addr: u64,
+    pub pitch: u32,
+    pub width: u32,
+    pub height: u32,
+    pub bpp: u8,
+    pub r#type: u8,
     _reserved: u8,
     /// This still has to be expanded
     color_info: [u8],
@@ -308,5 +308,9 @@ impl BootInformation {
 
     pub fn elf_symbols(&'static self) -> impl Iterator<Item = &'static ElfSymbol> {
         self.tags().filter_map(|t| if let Tag::ElfSymbol(es) = t {Some(es)} else {None})
+    }
+    
+    pub fn framebuffer(&'static self) -> impl Iterator<Item = &'static FrameBufferInfo> {
+        self.tags().filter_map(|t| if let Tag::FrameBufferInfo(fb) = t {Some(fb)} else {None})
     }
 }

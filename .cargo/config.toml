@@ -6,3 +6,11 @@ build-std-features = ["compiler-builtins-mem"]
 [build]
 target = "x86_64-unknown-none"
 rustdocflags = "--document-private-items"
+rustflags = [
+  "-C", "relocation-model=static",
+]
+
+# [target.x86_64-unknown-none]
+# rustflags = [
+#   "-C", "link-arg=-Tlink.ld",
+# ]

@@ -1,15 +1,7 @@
-default: image
+default: esp
 
 kernel:
-  cargo build
-
-boot:
-	mkdir -p target
-	nasm -felf64 src/boot/multiboot_header.asm -o target/multiboot_header.o
-	nasm -felf64 src/boot/boot.asm -o target/boot.o
-
-elf: boot kernel
-  ld -n -o target/runix.elf -T link.ld target/multiboot_header.o target/boot.o target/x86_64-unknown-none/debug/librunix.a
+  cargo build 
 
 esp: elf
   rm -rf esp
@@ -17,8 +9,11 @@ esp: elf
   mkdir -p target/esp/EFI/BOOT
   mkdir -p target/esp/boot
   cp Limine/BOOTX64.EFI target/esp/EFI/BOOT
-  cp target/runix.elf target/esp/boot
+  cp target/x86_64-unknown-none/debug/runix target/esp/boot/runix.elf
   cp limine.conf target/esp/boot
+
+elf: kernel
+	# ld -n -o target/x86_64-unknown-none/debug/runix.elf -T link.ld target/x86_64-unknown-none/debug/librunix.a
 
 image: esp
   rm -f runix.img
@@ -32,16 +27,22 @@ clean:
   rm -rf target
   rm -rf esp
 
+
+# QEMU
+# disk images may be run with -drive format=raw,file=runix.img
+
 run:
   qemu-system-x86_64 \
     -bios /usr/share/qemu/ovmf-x86_64.bin \
-    -drive format=raw,file=runix.img \
+    -drive format=raw,file=fat:rw:target/esp \
     -no-shutdown -no-reboot \
     -m 512M
 
 debug:
   qemu-system-x86_64 \
     -bios /usr/share/qemu/ovmf-x86_64.bin \
-    -drive format=raw,file=runix.img \
+    -drive format=raw,file=fat:rw:target/esp \
     -no-shutdown -no-reboot \
-    -m 512M
+    -m 512M \
+    -s -S &
+  gdb -x gdb.commands target/esp/boot/runix.elf
