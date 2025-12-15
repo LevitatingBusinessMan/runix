@@ -14,11 +14,11 @@ elf: boot kernel
 esp: elf
   rm -rf esp
   mkdir esp
-  mkdir -p esp/EFI/BOOT
-  mkdir -p esp/boot
-  cp Limine/BOOTX64.EFI esp/EFI/BOOT
-  cp target/runix.elf esp/boot
-  cp limine.conf esp/boot
+  mkdir -p target/esp/EFI/BOOT
+  mkdir -p target/esp/boot
+  cp Limine/BOOTX64.EFI target/esp/EFI/BOOT
+  cp target/runix.elf target/esp/boot
+  cp limine.conf target/esp/boot
 
 image: esp
   rm -f runix.img
