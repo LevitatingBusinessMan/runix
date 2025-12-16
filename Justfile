@@ -3,7 +3,7 @@ default: esp
 kernel:
   cargo build 
 
-esp: elf
+esp: kernel
   rm -rf esp
   mkdir esp
   mkdir -p target/esp/EFI/BOOT
@@ -11,9 +11,6 @@ esp: elf
   cp Limine/BOOTX64.EFI target/esp/EFI/BOOT
   cp target/x86_64-unknown-none/debug/runix target/esp/boot/runix.elf
   cp limine.conf target/esp/boot
-
-elf: kernel
-	# ld -n -o target/x86_64-unknown-none/debug/runix.elf -T link.ld target/x86_64-unknown-none/debug/librunix.a
 
 image: esp
   rm -f runix.img

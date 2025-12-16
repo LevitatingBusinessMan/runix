@@ -1,10 +1,16 @@
-pub mod hex;
+//! For bitmap fonts
+mod hex;
 
-/// A bitmap font
+pub use hex::UNSCII_8;
+pub use hex::UNSCII_FANTASY_8;
+pub use hex::UNSCII_16;
+
+/// A bitmap font.
+/// They are currently required to be 8 bits in widht.
 #[derive(Debug)]
 pub struct Font {
     /// how many rows
-    height: u8,
+    pub height: u8,
     /// pointer to the flattened array of glyphs
     inner: &'static [u8],
     /// how a char should be mapped to an index into the array

@@ -22,8 +22,10 @@ mod console;
 
 static WELCOME_STRING :&'static str = "Welcome to Runix!";
 
+use core::fmt::Write;
+
 use interrupts::keyboard;
-use limine::{BaseRevision, request::{FramebufferRequest, RequestsEndMarker, RequestsStartMarker}};
+use limine::{BaseRevision, framebuffer::Framebuffer, request::{FramebufferRequest, RequestsEndMarker, RequestsStartMarker}};
 
 #[used]
 #[unsafe(link_section = ".requests")]
@@ -45,8 +47,12 @@ static _LIMINE_REQUESTS_END_MARKER: RequestsEndMarker = RequestsEndMarker::new()
 #[unsafe(no_mangle)]
 unsafe extern "C" fn runix() -> ! {
     let fb = FRAMEBUFFER_REQUEST.get_response().unwrap().framebuffers().next().unwrap();
-    let console = console::Console::new(unsafe { core::mem::transmute(fb) });
-    console.test();
+    // convert to static
+    let fb = unsafe { core::mem::transmute(&fb) };
+    let mut console = console::Console::new(fb);
+    console.write_fmt(format_args!("Welcome to Runix.\n")).unwrap();
+    console.write_fmt(format_args!("The framebuffer is at {:?}\n", fb as *const Framebuffer)).unwrap();
+    console.write_fmt(format_args!("The raw framebuffer is at {:?}\n", fb.addr())).unwrap();
 
     gdt::init_gdt();
     interrupts::init();

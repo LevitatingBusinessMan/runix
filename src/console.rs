@@ -1,46 +1,91 @@
 //! drawing the console
 
-use core::slice;
+use core::{ascii::Char, fmt, slice};
 
 use crate::{fonts::{self, Font}, multiboot};
 
 pub struct  Console {
-    fb: limine::framebuffer::Framebuffer<'static>,
+    fb: &'static limine::framebuffer::Framebuffer<'static>,
     /// width in characters
     width: u32,
     /// height in characters
     height: u32,
     font: &'static Font,
     cursor: (u32, u32),
+    scale: usize,
 }
 
 impl Console {
-    pub fn new(fb: limine::framebuffer::Framebuffer<'static>) -> Self {
+    pub fn new(fb: &'static limine::framebuffer::Framebuffer<'static>) -> Self {
+        let scale: usize = 2;
+        let font = &fonts::UNSCII_FANTASY_8;
+        let width = fb.pitch() as u32 / (8 * scale) as u32;
+        let height = fb.height() / (font.height as usize * scale) as u64;
         Self {
             fb,
             cursor: (0, 0),
-            width: 0,
-            height: 0,
-            font: &fonts::hex::UNSCII_FANTASY_8,
+            width: width as u32,
+            height: height as u32,
+            font,
+            scale,
         }
     }
-    pub fn test(&self) {
+    
+    /// the actual frame buffer as a slice
+    fn frame_buffer(&self) -> &mut [u8] {
         let buffer_length = self.fb.height() * self.fb.pitch();
         let fbb = unsafe { slice::from_raw_parts_mut(self.fb.addr(), buffer_length as usize) };
-        let bytes_per_pixel = self.fb.bpp() / 8;
-        let pitch = self.fb.pitch();
-        for (char_column, c) in "Panic!".chars().enumerate() {
-            let glyph = self.font.get(c);
-            for (bit_row, bits) in glyph.iter().enumerate() {
-                for col in 0..8 {
-                    if (bits >> (7 - col)) & 1 == 1 {
-                        let offset = bit_row as usize * pitch as usize + col as usize * bytes_per_pixel as usize + char_column * 8 * bytes_per_pixel as usize;
-                        for i in 0..bytes_per_pixel {
-                            fbb[offset + i as usize] = 0xFF; // White
-                        }
+        fbb
+    }
+    
+    fn print_char(&mut self, c: char) {
+        // handle control characters
+        match c {
+            '\n' => {
+                self.break_line();
+                return;
+            },
+            _ => {}
+        }
+        
+        let glyph = self.font.get(c);
+        let y = self.font.height as usize * self.cursor.1 as usize;
+        let x = 8 * self.cursor.0 as usize;
+        let bytes_per_pixel = (self.fb.bpp() / 8) as usize;
+        let fbb = self.frame_buffer();
+        let pitch = self.fb.pitch() as usize;
+        for (row, bits) in glyph.iter().enumerate() {
+            for col in 0..8 {
+                if (bits >> (7 - col)) & 1 == 1 {
+                    let offset = (y + row) * pitch + x * bytes_per_pixel + col * bytes_per_pixel;
+                    for i in 0..bytes_per_pixel {
+                        fbb[offset + i as usize] = 0xFF; // white
                     }
                 }
             }
         }
+        self.move_forward();
+    }
+    
+    fn move_forward(&mut self) {
+        if self.cursor.0 < self.width {
+            self.cursor.0 += 1;
+        } else { // wrap
+            self.break_line();
+        }
+    }
+    
+    fn break_line(&mut self) {
+        self.cursor.0 = 0;
+        self.cursor.1 += 1;
+    }
+}
+
+impl fmt::Write for Console {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        for c in s.chars() {
+            self.print_char(c);
+        }
+        Ok(())
     }
 }
