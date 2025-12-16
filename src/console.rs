@@ -18,7 +18,7 @@ impl Console {
         let fbb = unsafe { slice::from_raw_parts_mut(self.fb.addr(), buffer_length as usize) };
         let bytes_per_pixel = self.fb.bpp() / 8;
         let pitch = self.fb.pitch();
-        for (char_column, c) in "hello world".chars().enumerate() {
+        for (char_column, c) in "Hello World".chars().enumerate() {
             let glyph = fonts::hex::UNSCII_FANTASY_8[c as usize];
             for (bit_row, bits) in glyph.iter().enumerate() {
                 for col in 0..8 {
