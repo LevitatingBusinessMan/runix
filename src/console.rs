@@ -12,22 +12,19 @@ pub struct  Console {
     height: u32,
     font: &'static Font,
     cursor: (u32, u32),
-    scale: usize,
 }
 
 impl Console {
     pub fn new(fb: &'static limine::framebuffer::Framebuffer<'static>) -> Self {
-        let scale: usize = 2;
-        let font = &fonts::UNSCII_FANTASY_8;
-        let width = fb.pitch() as u32 / (8 * scale) as u32;
-        let height = fb.height() / (font.height as usize * scale) as u64;
+        let font = &fonts::UNSCII_16;
+        let width = fb.pitch() as u32 / 8;
+        let height = fb.height() / font.height as u64;
         Self {
             fb,
             cursor: (0, 0),
             width: width as u32,
             height: height as u32,
             font,
-            scale,
         }
     }
     

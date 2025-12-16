@@ -22,7 +22,7 @@ mod console;
 
 static WELCOME_STRING :&'static str = "Welcome to Runix!";
 
-use core::fmt::Write;
+use core::{fmt::Write, ptr::addr_of};
 
 use interrupts::keyboard;
 use limine::{BaseRevision, framebuffer::Framebuffer, request::{FramebufferRequest, RequestsEndMarker, RequestsStartMarker}};
@@ -46,16 +46,19 @@ static _LIMINE_REQUESTS_END_MARKER: RequestsEndMarker = RequestsEndMarker::new()
 
 #[unsafe(no_mangle)]
 unsafe extern "C" fn runix() -> ! {
+    gdt::init_gdt();
+    interrupts::init();
+
     let fb = FRAMEBUFFER_REQUEST.get_response().unwrap().framebuffers().next().unwrap();
     // convert to static
     let fb = unsafe { core::mem::transmute(&fb) };
     let mut console = console::Console::new(fb);
     console.write_fmt(format_args!("Welcome to Runix.\n")).unwrap();
     console.write_fmt(format_args!("The framebuffer is at {:?}\n", fb as *const Framebuffer)).unwrap();
-    console.write_fmt(format_args!("The raw framebuffer is at {:?}\n", fb.addr())).unwrap();
+    console.write_fmt(format_args!("The actual buffer is at {:?}\n", fb.addr())).unwrap();
+    console.write_fmt(format_args!("The request is at {:?}\n", addr_of!(FRAMEBUFFER_REQUEST))).unwrap();
+    console.write_fmt(format_args!("{}x{} at {}bpp\n", fb.width(), fb.height(), fb.bpp())).unwrap();
 
-    gdt::init_gdt();
-    interrupts::init();
     //vga::clear();
 
     // let mbi = BootInformation::load(mbi_pointer);
