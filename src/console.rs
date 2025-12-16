@@ -2,15 +2,26 @@
 
 use core::slice;
 
-use crate::{fonts, multiboot};
+use crate::{fonts::{self, Font}, multiboot};
 
 pub struct  Console {
-    fb: limine::framebuffer::Framebuffer<'static>
+    fb: limine::framebuffer::Framebuffer<'static>,
+    /// width in characters
+    width: u32,
+    /// height in characters
+    height: u32,
+    font: &'static Font,
+    cursor: (u32, u32),
 }
+
 impl Console {
     pub fn new(fb: limine::framebuffer::Framebuffer<'static>) -> Self {
         Self {
-            fb
+            fb,
+            cursor: (0, 0),
+            width: 0,
+            height: 0,
+            font: &fonts::hex::UNSCII_FANTASY_8,
         }
     }
     pub fn test(&self) {
@@ -18,8 +29,8 @@ impl Console {
         let fbb = unsafe { slice::from_raw_parts_mut(self.fb.addr(), buffer_length as usize) };
         let bytes_per_pixel = self.fb.bpp() / 8;
         let pitch = self.fb.pitch();
-        for (char_column, c) in "Hello World".chars().enumerate() {
-            let glyph = fonts::hex::UNSCII_FANTASY_8[c as usize];
+        for (char_column, c) in "Panic!".chars().enumerate() {
+            let glyph = self.font.get(c);
             for (bit_row, bits) in glyph.iter().enumerate() {
                 for col in 0..8 {
                     if (bits >> (7 - col)) & 1 == 1 {

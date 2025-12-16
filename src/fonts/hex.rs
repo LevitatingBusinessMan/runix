@@ -1,7 +1,24 @@
 //! .HEX font library
-pub const UNSCII_8: [[u8; 8]; 128] = parse::<8, 128>(include_str!("../static/fonts/unscii-8.hex"));
-pub const UNSCII_FANTASY_8: [[u8; 8]; 128] = parse::<8, 128>(include_str!("../static/fonts/unscii-8-fantasy.hex"));
-pub const UNSCII_16: [[u8; 16]; 128] = parse::<16, 128>(include_str!("../static/fonts/unscii-16.hex"));
+use super::Font;
+
+pub static UNSCII_8: Font = Font {
+    height: 8,
+    inner: &parse::<8, 128>(include_str!("../static/fonts/unscii-8.hex")).as_flattened(),
+    mapping: |c| c as usize,
+};
+
+pub static UNSCII_FANTASY_8: Font = Font {
+    height: 8,
+    inner: &parse::<8, 128>(include_str!("../static/fonts/unscii-8-fantasy.hex")).as_flattened(),
+    mapping: |c| c as usize,
+};
+
+
+pub static UNSCII_16: Font = Font {
+    height: 16,
+    inner: &parse::<16, 128>(include_str!("../static/fonts/unscii-16.hex")).as_flattened(),
+    mapping: |c| c as usize,
+};
 
 /// parse a hex font
 pub const fn parse<const S: usize, const N: usize>(source: &str) -> [[u8; S]; N] {
