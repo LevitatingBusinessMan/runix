@@ -4,6 +4,8 @@
 #![feature(abi_x86_interrupt)]
 #![feature(const_trait_impl)]
 #![feature(ascii_char)]
+#![feature(ptr_as_ref_unchecked)]
+#![feature(cstr_display)]
 
 mod panic;
 #[macro_use]
@@ -19,46 +21,50 @@ mod gdt;
 mod pci;
 mod fonts;
 mod console;
+mod limine;
 
 static WELCOME_STRING :&'static str = "Welcome to Runix!";
 
 use core::{fmt::Write, ptr::addr_of};
 
-use interrupts::keyboard;
-use limine::{BaseRevision, framebuffer::Framebuffer, request::{FramebufferRequest, RequestsEndMarker, RequestsStartMarker}};
+use limine::BaseRevision;
 
 #[used]
 #[unsafe(link_section = ".requests")]
-pub static BASE_REVISION: BaseRevision = BaseRevision::with_revision(4);
+pub static BASE_REVISION: BaseRevision = BaseRevision::new();
 
 #[used]
 #[unsafe(link_section = ".requests")]
-static FRAMEBUFFER_REQUEST: FramebufferRequest = FramebufferRequest::new();
+static FRAMEBUFFER_REQUEST: limine::FramebufferRequest = limine::FramebufferRequest::new();
 
 #[used]
-#[unsafe(link_section = ".requests_start_marker")]
-static _LIMINE_REQUESTS_START_MARKER: RequestsStartMarker = RequestsStartMarker::new();
+#[unsafe(link_section = ".requests")]
+static BOOTLOADER_INFO_REQUEST: limine::BootloaderInfoRequest = limine::BootloaderInfoRequest::new();
 
-#[used]
-#[unsafe(link_section = ".requests_end_marker")]
-static _LIMINE_REQUESTS_END_MARKER: RequestsEndMarker = RequestsEndMarker::new();
 
+// #[used]
+// #[unsafe(link_section = ".requests_start_marker")]
+// static _LIMINE_REQUESTS_START_MARKER: RequestsStartMarker = RequestsStartMarker::new();
+
+// #[used]
+// #[unsafe(link_section = ".requests_end_marker")]
+// static _LIMINE_REQUESTS_END_MARKER: RequestsEndMarker = RequestsEndMarker::new();
 
 #[unsafe(no_mangle)]
 unsafe extern "C" fn runix() -> ! {
+    let fb = FRAMEBUFFER_REQUEST.response().unwrap().framebuffers()[0];
+    let bootloader_info = BOOTLOADER_INFO_REQUEST.response().unwrap();
+    
+
+    let mut console = console::Console::new(fb);
+    console.write_fmt(format_args!("Welcome to Runix\n")).unwrap();
+    console.write_fmt(format_args!("Booted via {} {}\n", bootloader_info.name().display(), bootloader_info.version().display())).unwrap();
+    console.write_fmt(format_args!("The framebuffer structure is at {:?}\n", fb as *const limine::Framebuffer)).unwrap();
+    console.write_fmt(format_args!("The actual buffer is at {:?}\n", fb.address)).unwrap();
+
     gdt::init_gdt();
     interrupts::init();
-
-    let fb = FRAMEBUFFER_REQUEST.get_response().unwrap().framebuffers().next().unwrap();
-    // convert to static
-    let fb = unsafe { core::mem::transmute(&fb) };
-    let mut console = console::Console::new(fb);
-    console.write_fmt(format_args!("Welcome to Runix.\n")).unwrap();
-    console.write_fmt(format_args!("The framebuffer is at {:?}\n", fb as *const Framebuffer)).unwrap();
-    console.write_fmt(format_args!("The actual buffer is at {:?}\n", fb.addr())).unwrap();
-    console.write_fmt(format_args!("The request is at {:?}\n", addr_of!(FRAMEBUFFER_REQUEST))).unwrap();
-    console.write_fmt(format_args!("{}x{} at {}bpp\n", fb.width(), fb.height(), fb.bpp())).unwrap();
-
+    
     //vga::clear();
 
     // let mbi = BootInformation::load(mbi_pointer);

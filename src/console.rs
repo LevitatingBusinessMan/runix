@@ -2,10 +2,10 @@
 
 use core::{ascii::Char, fmt, slice};
 
-use crate::{fonts::{self, Font}, multiboot};
+use crate::{fonts::{self, Font}, limine, multiboot};
 
 pub struct  Console {
-    fb: &'static limine::framebuffer::Framebuffer<'static>,
+    fb: &'static limine::Framebuffer,
     /// width in characters
     width: u32,
     /// height in characters
@@ -15,10 +15,10 @@ pub struct  Console {
 }
 
 impl Console {
-    pub fn new(fb: &'static limine::framebuffer::Framebuffer<'static>) -> Self {
+    pub fn new(fb: &'static limine::Framebuffer) -> Self {
         let font = &fonts::UNSCII_16;
-        let width = fb.pitch() as u32 / 8;
-        let height = fb.height() / font.height as u64;
+        let width = fb.pitch as u32 / 8;
+        let height = fb.height / font.height as u64;
         Self {
             fb,
             cursor: (0, 0),
@@ -26,13 +26,6 @@ impl Console {
             height: height as u32,
             font,
         }
-    }
-    
-    /// the actual frame buffer as a slice
-    fn frame_buffer(&self) -> &mut [u8] {
-        let buffer_length = self.fb.height() * self.fb.pitch();
-        let fbb = unsafe { slice::from_raw_parts_mut(self.fb.addr(), buffer_length as usize) };
-        fbb
     }
     
     fn print_char(&mut self, c: char) {
@@ -48,9 +41,9 @@ impl Console {
         let glyph = self.font.get(c);
         let y = self.font.height as usize * self.cursor.1 as usize;
         let x = 8 * self.cursor.0 as usize;
-        let bytes_per_pixel = (self.fb.bpp() / 8) as usize;
-        let fbb = self.frame_buffer();
-        let pitch = self.fb.pitch() as usize;
+        let bytes_per_pixel = (self.fb.bpp / 8) as usize;
+        let fbb = self.fb.buffer();
+        let pitch = self.fb.pitch as usize;
         for (row, bits) in glyph.iter().enumerate() {
             for col in 0..8 {
                 if (bits >> (7 - col)) & 1 == 1 {
