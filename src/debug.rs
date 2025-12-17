@@ -31,6 +31,13 @@ pub fn dump(addr: *const i8, len: usize) {
 //     }
 // }
 
+
+pub fn print_limine_memory_map() {
+    for entry in crate::MEMMAP_REQUEST.response().unwrap().entries() {
+        println!("{:x?}", entry);
+    }
+}
+
 #[inline(always)]
 pub fn print_registers() {
     let rip = x86_64::registers::read_rip();

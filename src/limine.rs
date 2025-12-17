@@ -153,3 +153,70 @@ pub struct VideoMode {
     pub blue_mask_size: u8,
     pub blue_mask_shift: u8,
 }
+
+#[repr(C, align(8))]
+pub struct MemMapRequest {
+    base: BaseRequest,
+}
+
+#[repr(C)]
+pub struct MemMapResponse {
+    revision: u64,
+    entry_count: u64,
+    entries: *const *const MemMapEntry,
+}
+
+#[repr(u64)]
+#[derive(Debug)]
+pub enum MemMapType {
+    Usable = 0,
+    Reserved = 1,
+    AcpiReclaimable = 2,
+    AcpiNvs = 3,
+    BadMemory = 4,
+    BootloaderReclaimable = 5,
+    ExecutablesAndModules = 6,
+    Framebuffer = 7,
+    AcpiTables = 8,
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct MemMapEntry {
+    base: u64,
+    length: u64,
+    r#type: MemMapType,
+}
+
+impl MemMapRequest {
+    pub const fn new() -> Self {
+        Self {
+            base: BaseRequest::new([0x67cf3d9d378a806f, 0xe304acdfc50c3c62], 0),
+        }
+    }
+    pub fn response(&self) -> Option<&'static MemMapResponse> {
+        unsafe { (self.base.response as *const MemMapResponse).as_ref() }
+    }
+}
+
+impl MemMapResponse {
+    pub fn entries(&self) -> &[&'static MemMapEntry] {
+        unsafe { slice::from_raw_parts(transmute(self.entries), self.entry_count as usize) }
+    }
+}
+
+#[repr(C, align(8))]
+pub struct RequestsStartMarker([u64; 4]);
+impl RequestsStartMarker {
+    pub const fn new() -> Self {
+        Self([0xf6b8f4b39de7d1ae, 0xfab91a6940fcb9cf, 0x785c6ed015d3e316, 0x181e920a7852b9d9])
+    }
+}
+
+#[repr(C, align(8))]
+pub struct RequestsEndMarker([u64; 2]);
+impl RequestsEndMarker {
+    pub const fn new() -> Self {
+        Self([0xadc0e0531bb10d03, 0x9572709f31764c62])
+    }
+}

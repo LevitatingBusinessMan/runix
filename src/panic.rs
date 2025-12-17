@@ -1,11 +1,11 @@
-use core::panic::PanicInfo;
+use core::panic::{Location, PanicInfo};
 use core::fmt::Write;
 
 use crate::qemu::QemuDebug;
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    let _ = QemuDebug().write_fmt(format_args!("{info:?}\n"));
+    let _ = QemuDebug().write_fmt(format_args!("Panic at {}\n{}\n", info.location().unwrap(), info.message()));
 	// let cover = match crate::conf::CONFIG.get() {
 	// 	Some(conf) => conf.panic_cover,
 	// 	None => true,

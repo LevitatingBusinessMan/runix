@@ -38,16 +38,28 @@ use limine::BaseRevision;
 use spin::{Lazy, Mutex};
 
 #[used]
-#[unsafe(link_section = ".requests")]
+#[link_section = ".requests"]
 pub static BASE_REVISION: BaseRevision = BaseRevision::new();
 
 #[used]
-#[unsafe(link_section = ".requests")]
+#[link_section = ".requests"]
 static FRAMEBUFFER_REQUEST: limine::FramebufferRequest = limine::FramebufferRequest::new();
 
 #[used]
-#[unsafe(link_section = ".requests")]
+#[link_section = ".requests"]
 static BOOTLOADER_INFO_REQUEST: limine::BootloaderInfoRequest = limine::BootloaderInfoRequest::new();
+
+#[used]
+#[link_section = ".requests"]
+static MEMMAP_REQUEST: limine::MemMapRequest = limine::MemMapRequest::new();
+
+#[used]
+#[link_section = ".requests_start_marker"]
+static LIMINE_REQUESTS_START_MARKER: limine::RequestsStartMarker = limine::RequestsStartMarker::new();
+
+#[used]
+#[link_section = ".requests_end_marker"]
+static LIMINE_REQUESTS_END_MARKER: limine::RequestsEndMarker = limine::RequestsEndMarker::new();
 
 
 // #[used]
@@ -74,7 +86,7 @@ unsafe extern "C" fn runix() -> ! {
     // console.write_fmt(format_args!("Booted via {} {}\n", bootloader_info.name().display(), bootloader_info.version().display())).unwrap();
     // console.write_fmt(format_args!("The framebuffer structure is at {:?}\n", fb as *const limine::Framebuffer)).unwrap();
     // console.write_fmt(format_args!("The actual buffer is at {:?}\n", fb.address)).unwrap();
-
+    
     kdebug::kdebug();
     
     //vga::clear();

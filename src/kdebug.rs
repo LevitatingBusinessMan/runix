@@ -49,6 +49,7 @@ fn handle_cmd(cmd: &[u8]) {
             println!("pagefault");
             println!("scanpci");
             // println!("mbitags");
+            println!("lmemmap");
             println!("clear");
         },
         // b"sections" => debug::print_elfsections(),
@@ -73,6 +74,9 @@ fn handle_cmd(cmd: &[u8]) {
         //         println!("{tag:?}");
         //     }
         // },
+        b"lmemmap" => {
+            debug::print_limine_memory_map();
+        },
         b"clear" => {
             print::CONSOLE.lock().as_mut().unwrap().clear();
         },

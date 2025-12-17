@@ -12,10 +12,16 @@ pub static QEMU_DEBUG: Mutex<QemuDebug> = Mutex::new(QemuDebug());
 /// initialize a main console for printing
 /// using the first found framebuffer
 pub fn init_console() {
-    let fb = crate::FRAMEBUFFER_REQUEST.response().unwrap().framebuffers()[0];
-    let mut console = Console::new(fb);
-    console.clear();
-    *CONSOLE.lock() = Some(console);
+    match crate::FRAMEBUFFER_REQUEST.response() {
+        Some(response) => {
+            if let Some(fb) = response.framebuffers().first() {
+                let mut console = Console::new(fb);
+                console.clear();
+                *CONSOLE.lock() = Some(console);
+            }
+        },
+        None => {},
+    }
 }
 
 pub fn print_err(err: &'static str) {
@@ -36,8 +42,6 @@ pub fn print_args(args: fmt::Arguments) {
     x86_64::instructions::interrupts::without_interrupts(|| {
         if let Some(ref mut console) = &mut *CONSOLE.lock() {
             let _ = console.write_fmt(args);
-        } else {
-            panic!()
         }
         let qemu = &mut *QEMU_DEBUG.lock();
         let _ = qemu.write_fmt(args);
