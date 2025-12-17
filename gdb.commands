@@ -1,3 +1,5 @@
 break runix
 target remote localhost:1234
+echo You will break at entry\n
+echo stay safe\n
 continue

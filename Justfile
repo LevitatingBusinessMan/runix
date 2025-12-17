@@ -33,6 +33,7 @@ run:
     -bios /usr/share/qemu/ovmf-x86_64.bin \
     -drive format=raw,file=fat:rw:target/esp \
     -no-shutdown -no-reboot \
+    -debugcon stdio \
     -m 512M
 
 debug:
@@ -41,5 +42,6 @@ debug:
     -drive format=raw,file=fat:rw:target/esp \
     -no-shutdown -no-reboot \
     -m 512M \
+    -debugcon stdio \
     -s -S &
   gdb -x gdb.commands target/esp/boot/runix.elf

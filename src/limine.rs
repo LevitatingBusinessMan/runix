@@ -107,6 +107,8 @@ impl FramebufferRequest {
     }
 }
 
+unsafe impl Sync for Framebuffer {}
+
 #[repr(C)]
 pub struct Framebuffer {
     pub address: *mut u8,

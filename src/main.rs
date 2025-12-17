@@ -7,9 +7,11 @@
 #![feature(ptr_as_ref_unchecked)]
 #![feature(cstr_display)]
 
-mod panic;
 #[macro_use]
-mod vga;
+pub mod print;
+mod panic;
+// #[macro_use]
+// mod vga;
 #[deprecated]
 mod multiboot;
 // mod conf;
@@ -23,12 +25,15 @@ mod fonts;
 mod console;
 mod limine;
 mod gfx;
+mod qemu;
+
 
 static WELCOME_STRING :&'static str = "Welcome to Runix!";
 
 use core::{fmt::Write, ptr::addr_of};
 
 use limine::BaseRevision;
+use spin::{Lazy, Mutex};
 
 #[used]
 #[unsafe(link_section = ".requests")]
@@ -53,16 +58,17 @@ static BOOTLOADER_INFO_REQUEST: limine::BootloaderInfoRequest = limine::Bootload
 
 #[unsafe(no_mangle)]
 unsafe extern "C" fn runix() -> ! {
-    let fb = FRAMEBUFFER_REQUEST.response().unwrap().framebuffers()[0];
+    print::init_console();
     let bootloader_info = BOOTLOADER_INFO_REQUEST.response().unwrap();
-    
+        
+    println!("Welcome to Runix");
+    println!("Booted via {} {}\n", bootloader_info.name().display(), bootloader_info.version().display());
 
-    let mut console = console::Console::new(fb);
-    console.clear();
-    console.write_fmt(format_args!("Welcome to Runix\n")).unwrap();
-    console.write_fmt(format_args!("Booted via {} {}\n", bootloader_info.name().display(), bootloader_info.version().display())).unwrap();
-    console.write_fmt(format_args!("The framebuffer structure is at {:?}\n", fb as *const limine::Framebuffer)).unwrap();
-    console.write_fmt(format_args!("The actual buffer is at {:?}\n", fb.address)).unwrap();
+    // console.clear();
+    // console.write_fmt(format_args!("Welcome to Runix\n")).unwrap();
+    // console.write_fmt(format_args!("Booted via {} {}\n", bootloader_info.name().display(), bootloader_info.version().display())).unwrap();
+    // console.write_fmt(format_args!("The framebuffer structure is at {:?}\n", fb as *const limine::Framebuffer)).unwrap();
+    // console.write_fmt(format_args!("The actual buffer is at {:?}\n", fb.address)).unwrap();
 
     gdt::init_gdt();
     interrupts::init();

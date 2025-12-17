@@ -1,6 +1,5 @@
 use core::panic::PanicInfo;
 use core::fmt::Write;
-use crate::vga;
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
