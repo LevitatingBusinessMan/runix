@@ -72,6 +72,10 @@ impl Console {
     fn break_line(&mut self) {
         self.cursor.0 = 0;
         self.cursor.1 += 1;
+        if self.cursor.1 >= self.height {
+            self.roll();
+            self.cursor.1 -= 1;
+        }
     }
     
     pub fn clear(&mut self) {
@@ -100,6 +104,19 @@ impl Console {
                 }
             }
         }
+    }
+    
+    /// move all rows up 1 cell/row
+    pub fn roll(&mut self) {
+        let fbb = self.fb.buffer();
+        let row_size = self.fb.pitch as usize * self.font.height as usize;
+        for i in 1..self.height as usize {
+            let offset = i * row_size;
+            let (top, bot) = fbb.split_at_mut(offset);
+            top[offset-row_size..].copy_from_slice(&bot[..row_size]);
+        }
+        // clear last row
+        fbb[row_size*(self.height as usize - 1)..].fill(0xFF);
     }
 }
 
