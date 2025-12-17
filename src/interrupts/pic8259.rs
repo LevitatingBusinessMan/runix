@@ -30,13 +30,15 @@ pub fn send_eoi(irq: u8) {
 }
 
 /// Reinitiliaze the PIC to use an offset above 0x20
+//  NOTE
+//  when booting with Limine, PIC is completely masked on entry
 pub fn init_pic() {
 
     // Older moderboards might require some processing timme between the writes to the PICS
     unsafe {
         // Save masks
-        let pic1_mask = PIC1.data.read();
-        let pic2_mask = PIC2.data.read();
+        // let pic1_mask = PIC1.data.read();
+        // let pic2_mask = PIC2.data.read();
 
         // Tell the PICs to initialize
         PIC1.command.write(0x11);
@@ -64,7 +66,7 @@ pub fn init_pic() {
         io_wait!();
 
         // Restore masks
-        PIC1.data.write(pic1_mask);
-        PIC2.data.write(pic2_mask);
+        // PIC1.data.write(pic1_mask);
+        // PIC2.data.write(pic2_mask);
     }
 }

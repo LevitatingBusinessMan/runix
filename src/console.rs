@@ -76,6 +76,30 @@ impl Console {
     
     pub fn clear(&mut self) {
         self.fb.clear_grey(0xFF);
+        self.cursor = (0, 0);
+    }
+    
+    /// move the cursor back a position
+    pub fn backspace(&mut self) {
+        self.cursor.0 = self.cursor.0.saturating_sub(1);
+        self.clear_cell();
+    }
+    
+    pub fn clear_cell(&mut self) {
+        let y = self.font.height as usize * self.cursor.1 as usize;
+        let x = 8 * self.cursor.0 as usize;
+        let bytes_per_pixel = (self.fb.bpp / 8) as usize;
+        let fbb = self.fb.buffer();
+        let pitch = self.fb.pitch as usize;
+        for row in 0..self.font.height as usize {
+            // this can be done more efficiently
+            for col in 0..8 {
+                let offset = (y + row) * pitch + x * bytes_per_pixel + col * bytes_per_pixel;
+                for i in 0..bytes_per_pixel {
+                    fbb[offset + i as usize] = 0xFF; // white
+                }
+            }
+        }
     }
 }
 

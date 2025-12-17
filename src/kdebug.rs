@@ -2,7 +2,7 @@
 
 use core::ptr::{addr_of, slice_from_raw_parts};
 
-use crate::{debug, keyboard, pci, vga};
+use crate::{console, debug, keyboard, pci, print};
 
 pub fn kdebug() -> ! {
     let mut kr = keyboard::KeyReader::new();
@@ -29,9 +29,7 @@ pub fn kdebug() -> ! {
                 if key == keyboard::ps2::KeyCode::Backspace {
                     if index > 0 {
                         index -= 1;
-                        vga::PRINTER.lock().col -= 1;
-                        print!(" "); // clear character
-                        vga::PRINTER.lock().col -= 1;
+                        print::CONSOLE.lock().as_mut().unwrap().backspace();
                     }
                 }
             }
@@ -43,23 +41,23 @@ fn handle_cmd(cmd: &[u8]) {
     match cmd {
         b"help" => {
             println!("List of commands:");
-            println!("sections");
-            println!("memory");
+            // println!("sections");
+            // println!("memory");
             println!("registers");
-            println!("mbi");
+            // println!("mbi");
             println!("stackoverflow");
             println!("pagefault");
             println!("scanpci");
-            println!("mbitags");
-            println!("clean");
+            // println!("mbitags");
+            println!("clear");
         },
-        b"sections" => debug::print_elfsections(),
-        b"memory" => debug::print_memoryareas(),
+        // b"sections" => debug::print_elfsections(),
+        // b"memory" => debug::print_memoryareas(),
         b"registers" => debug::print_registers(),
-        b"mbi" => {
-            let mbi = crate::MBI.get().unwrap();
-            println!("Multiboot at: {:#7x?} - {:#7x?}", addr_of!(**mbi) as *const (), addr_of!(**mbi) as *const () as usize + mbi.total_size as usize);
-        },
+        // b"mbi" => {
+        //     let mbi = crate::MBI.get().unwrap();
+        //     println!("Multiboot at: {:#7x?} - {:#7x?}", addr_of!(**mbi) as *const (), addr_of!(**mbi) as *const () as usize + mbi.total_size as usize);
+        // },
         b"stackoverflow" => {
             debug::stack_overflow();
         },
@@ -69,16 +67,14 @@ fn handle_cmd(cmd: &[u8]) {
         b"scanpci" => {
             pci::scanner::brute_force();
         },
-        b"mbitags" => {
-            let mbi = crate::MBI.get().unwrap();
-            for tag in mbi.tags() {
-                println!("{tag:?}");
-            }
-        },
+        // b"mbitags" => {
+        //     let mbi = crate::MBI.get().unwrap();
+        //     for tag in mbi.tags() {
+        //         println!("{tag:?}");
+        //     }
+        // },
         b"clear" => {
-            vga::clear();
-            vga::PRINTER.lock().col = 0;
-            vga::PRINTER.lock().row = 0;
+            print::CONSOLE.lock().as_mut().unwrap().clear();
         },
         _ => {
             println!("Unknown command");

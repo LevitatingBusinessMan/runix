@@ -17,8 +17,8 @@ mod multiboot;
 // mod conf;
 mod interrupts;
 mod gdt;
-// mod kdebug;
-// mod debug;
+mod kdebug;
+mod debug;
 // mod allocator;
 mod pci;
 mod fonts;
@@ -26,6 +26,8 @@ mod console;
 mod limine;
 mod gfx;
 mod qemu;
+
+pub use interrupts::keyboard;
 
 
 static WELCOME_STRING :&'static str = "Welcome to Runix!";
@@ -59,19 +61,21 @@ static BOOTLOADER_INFO_REQUEST: limine::BootloaderInfoRequest = limine::Bootload
 #[unsafe(no_mangle)]
 unsafe extern "C" fn runix() -> ! {
     print::init_console();
+    //gdt::init_gdt();
+    interrupts::init();
+
     let bootloader_info = BOOTLOADER_INFO_REQUEST.response().unwrap();
         
     println!("Welcome to Runix");
     println!("Booted via {} {}\n", bootloader_info.name().display(), bootloader_info.version().display());
-
+    
     // console.clear();
     // console.write_fmt(format_args!("Welcome to Runix\n")).unwrap();
     // console.write_fmt(format_args!("Booted via {} {}\n", bootloader_info.name().display(), bootloader_info.version().display())).unwrap();
     // console.write_fmt(format_args!("The framebuffer structure is at {:?}\n", fb as *const limine::Framebuffer)).unwrap();
     // console.write_fmt(format_args!("The actual buffer is at {:?}\n", fb.address)).unwrap();
 
-    gdt::init_gdt();
-    interrupts::init();
+    kdebug::kdebug();
     
     //vga::clear();
 
@@ -80,9 +84,7 @@ unsafe extern "C" fn runix() -> ! {
     // MBI.call_once(|| mbi);
 
     // conf::parse(mbi.boot_command_line().expect("Could not get cmdline").to_str().unwrap());
-    
-    hlt_loop!();
-    
+        
     // for tag in mbi.tags() {
     //     if let multiboot::Tag::Unknown(type_, data) = tag {
     //         wprintln!(" Unknown multiboot tag: type {} size: {:#x}", type_, data.len());
@@ -111,9 +113,6 @@ unsafe extern "C" fn runix() -> ! {
     // }
 
     // allocator::init();
-
-    // kdebug::kdebug();
-
 }
 
 #[macro_export]

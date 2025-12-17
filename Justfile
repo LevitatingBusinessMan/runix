@@ -42,6 +42,5 @@ debug:
     -drive format=raw,file=fat:rw:target/esp \
     -no-shutdown -no-reboot \
     -m 512M \
-    -debugcon stdio \
     -s -S &
   gdb -x gdb.commands target/esp/boot/runix.elf
