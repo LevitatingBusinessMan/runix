@@ -2,7 +2,7 @@
 
 use core::ptr::{addr_of, slice_from_raw_parts};
 
-use crate::{console, debug, keyboard, pci, print};
+use crate::{console, debug, hbreak, keyboard, limine::MemMapType, pci, print};
 
 pub fn kdebug() -> ! {
     let mut kr = keyboard::KeyReader::new();
@@ -49,7 +49,11 @@ fn handle_cmd(cmd: &[u8]) {
             println!("pagefault");
             println!("scanpci");
             // println!("mbitags");
-            println!("lmemmap");
+            println!("memmap");
+            println!("hbreak");
+            println!("usable");
+            println!("executable");
+            println!("hhdm");
             println!("clear");
         },
         // b"sections" => debug::print_elfsections(),
@@ -74,8 +78,25 @@ fn handle_cmd(cmd: &[u8]) {
         //         println!("{tag:?}");
         //     }
         // },
-        b"lmemmap" => {
+        b"memmap" => {
             debug::print_limine_memory_map();
+        },
+        b"usable" => {
+            println!("{:>16} {:>16} {}", "START", "END", "SIZE of usable memory regions"); 
+            for entry in crate::MEMMAP_REQUEST.response().unwrap().entries() {
+                if matches!(entry.r#type, MemMapType::Usable) {
+                    println!("{:>16x?} {:>16x?} {:x?}", entry.base, (entry.base + entry.length), entry.length)
+                }
+            }
+        },
+        b"executable" => {
+            println!("{:x?}", crate::EXECUTABLE_ADDRESS_REQUEST.response().unwrap());  
+        },
+        b"hhdm" => {
+          println!("{:x?}", crate::HHDM_REQUEST.response().unwrap())  
+        },
+        b"hbreak" => {
+            hbreak!();
         },
         b"clear" => {
             print::CONSOLE.lock().as_mut().unwrap().clear();

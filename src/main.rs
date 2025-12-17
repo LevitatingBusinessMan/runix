@@ -29,17 +29,9 @@ mod qemu;
 
 pub use interrupts::keyboard;
 
-
-static WELCOME_STRING :&'static str = "Welcome to Runix!";
-
-use core::{fmt::Write, ptr::addr_of};
-
-use limine::BaseRevision;
-use spin::{Lazy, Mutex};
-
 #[used]
 #[link_section = ".requests"]
-pub static BASE_REVISION: BaseRevision = BaseRevision::new();
+pub static BASE_REVISION: limine::BaseRevision = limine::BaseRevision::new();
 
 #[used]
 #[link_section = ".requests"]
@@ -52,6 +44,14 @@ static BOOTLOADER_INFO_REQUEST: limine::BootloaderInfoRequest = limine::Bootload
 #[used]
 #[link_section = ".requests"]
 static MEMMAP_REQUEST: limine::MemMapRequest = limine::MemMapRequest::new();
+
+#[used]
+#[link_section = ".requests"]
+static HHDM_REQUEST: limine::HhdmRequest = limine::HhdmRequest::new();
+
+#[used]
+#[link_section = ".requests"]
+static EXECUTABLE_ADDRESS_REQUEST: limine::ExecutableAddressRequest = limine::ExecutableAddressRequest::new();
 
 #[used]
 #[link_section = ".requests_start_marker"]
@@ -79,14 +79,8 @@ unsafe extern "C" fn runix() -> ! {
     let bootloader_info = BOOTLOADER_INFO_REQUEST.response().unwrap();
         
     println!("Welcome to Runix");
-    println!("Booted via {} {}\n", bootloader_info.name().display(), bootloader_info.version().display());
-    
-    // console.clear();
-    // console.write_fmt(format_args!("Welcome to Runix\n")).unwrap();
-    // console.write_fmt(format_args!("Booted via {} {}\n", bootloader_info.name().display(), bootloader_info.version().display())).unwrap();
-    // console.write_fmt(format_args!("The framebuffer structure is at {:?}\n", fb as *const limine::Framebuffer)).unwrap();
-    // console.write_fmt(format_args!("The actual buffer is at {:?}\n", fb.address)).unwrap();
-    
+    println!("Booted via {} {}", bootloader_info.name().display(), bootloader_info.version().display());
+        
     kdebug::kdebug();
     
     //vga::clear();

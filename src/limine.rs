@@ -1,6 +1,6 @@
 //! limine boot protocol
 
-use core::{ffi::{CStr, c_char}, mem::{MaybeUninit, transmute}, ptr, slice};
+use core::{ffi::{CStr, c_char}, fmt::Debug, mem::{MaybeUninit, transmute}, ptr, slice};
 
 use x86_64::registers::segmentation::CS;
 #[repr(C, align(8))]
@@ -183,9 +183,9 @@ pub enum MemMapType {
 #[repr(C)]
 #[derive(Debug)]
 pub struct MemMapEntry {
-    base: u64,
-    length: u64,
-    r#type: MemMapType,
+    pub base: u64,
+    pub length: u64,
+    pub r#type: MemMapType,
 }
 
 impl MemMapRequest {
@@ -218,5 +218,50 @@ pub struct RequestsEndMarker([u64; 2]);
 impl RequestsEndMarker {
     pub const fn new() -> Self {
         Self([0xadc0e0531bb10d03, 0x9572709f31764c62])
+    }
+}
+
+#[repr(C, align(8))]
+pub struct ExecutableAddressRequest {
+    base: BaseRequest,
+}
+
+#[derive(Debug)]
+pub struct ExecutableAddressResponse {
+    revision: u64,
+    physical_base: u64,
+    virtual_base: u64,
+}
+
+impl ExecutableAddressRequest {
+    pub const fn new() -> Self {
+        Self {
+            base: BaseRequest::new([0x71ba76863cc55f63, 0xb2644a48c516a487], 0),
+        }
+    }
+    pub fn response(&self) -> Option<&'static ExecutableAddressResponse> {
+        unsafe { (self.base.response as *const ExecutableAddressResponse).as_ref() }
+    }
+}
+
+#[repr(C, align(8))]
+pub struct HhdmRequest {
+    base: BaseRequest,
+}
+
+#[derive(Debug)]
+pub struct HhdmResponse {
+    revision: u64,
+    offset: u64,
+}
+
+impl HhdmRequest {
+    pub const fn new() -> Self {
+        Self {
+            base: BaseRequest::new([0x48dcf1cb8ad2b852, 0x63984e959a98244b], 0),
+        }
+    }
+    pub fn response(&self) -> Option<&'static HhdmResponse> {
+        unsafe { (self.base.response as *const HhdmResponse).as_ref() }
     }
 }

@@ -2,7 +2,7 @@
 
 use core::{ascii::Char, fmt, slice};
 
-use crate::{fonts::{self, Font}, gfx::{self, FramebufferGfxExtension}, limine, multiboot};
+use crate::{fonts::{self, Font, UNSCII_16}, gfx::{self, FramebufferGfxExtension}, limine, multiboot};
 
 pub struct  Console {
     fb: &'static limine::Framebuffer,
@@ -17,8 +17,10 @@ pub struct  Console {
 }
 
 impl Console {
+    pub const DEFAULT_FONT: &Font = &UNSCII_16;
+
     pub fn new(fb: &'static limine::Framebuffer) -> Self {
-        let font = &fonts::UNSCII_16;
+        let font = Self::DEFAULT_FONT;
         let width = fb.pitch as u32 / 8;
         let height = fb.height / font.height as u64;
         Self {
