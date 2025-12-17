@@ -22,6 +22,7 @@ mod pci;
 mod fonts;
 mod console;
 mod limine;
+mod gfx;
 
 static WELCOME_STRING :&'static str = "Welcome to Runix!";
 
@@ -57,6 +58,7 @@ unsafe extern "C" fn runix() -> ! {
     
 
     let mut console = console::Console::new(fb);
+    console.clear();
     console.write_fmt(format_args!("Welcome to Runix\n")).unwrap();
     console.write_fmt(format_args!("Booted via {} {}\n", bootloader_info.name().display(), bootloader_info.version().display())).unwrap();
     console.write_fmt(format_args!("The framebuffer structure is at {:?}\n", fb as *const limine::Framebuffer)).unwrap();

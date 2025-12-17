@@ -2,7 +2,7 @@
 
 use core::{ascii::Char, fmt, slice};
 
-use crate::{fonts::{self, Font}, limine, multiboot};
+use crate::{fonts::{self, Font}, gfx::{self, FramebufferGfxExtension}, limine, multiboot};
 
 pub struct  Console {
     fb: &'static limine::Framebuffer,
@@ -12,6 +12,8 @@ pub struct  Console {
     height: u32,
     font: &'static Font,
     cursor: (u32, u32),
+    color_fg: gfx::Color,
+    color_bg: gfx::Color,
 }
 
 impl Console {
@@ -25,6 +27,8 @@ impl Console {
             width: width as u32,
             height: height as u32,
             font,
+            color_fg: gfx::Color::BLACK,
+            color_bg: gfx::Color::WHITE,
         }
     }
     
@@ -49,7 +53,7 @@ impl Console {
                 if (bits >> (7 - col)) & 1 == 1 {
                     let offset = (y + row) * pitch + x * bytes_per_pixel + col * bytes_per_pixel;
                     for i in 0..bytes_per_pixel {
-                        fbb[offset + i as usize] = 0xFF; // white
+                        fbb[offset + i as usize] = 0x00; // black
                     }
                 }
             }
@@ -68,6 +72,10 @@ impl Console {
     fn break_line(&mut self) {
         self.cursor.0 = 0;
         self.cursor.1 += 1;
+    }
+    
+    pub fn clear(&mut self) {
+        self.fb.clear_grey(0xFF);
     }
 }
 
