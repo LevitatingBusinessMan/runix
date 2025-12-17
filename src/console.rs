@@ -2,14 +2,14 @@
 
 use core::{ascii::Char, fmt, slice};
 
-use crate::{fonts::{self, Font, UNSCII_16}, gfx::{self, FramebufferGfxExtension}, limine, multiboot};
+use crate::{fonts::{self, Font, UNSCII_16}, gfx::{self, Color, FramebufferGfxExtension}, limine, multiboot};
 
 pub struct  Console {
     fb: &'static limine::Framebuffer,
     /// width in characters
-    width: u32,
+    pub width: u32,
     /// height in characters
-    height: u32,
+    pub height: u32,
     font: &'static Font,
     cursor: (u32, u32),
     color_fg: gfx::Color,
@@ -32,6 +32,10 @@ impl Console {
             color_fg: gfx::Color::BLACK,
             color_bg: gfx::Color::WHITE,
         }
+    }
+    
+    pub fn set_cursor(&mut self, cursor: (u32, u32)) {
+        self.cursor = cursor;
     }
     
     fn print_char(&mut self, c: char) {
