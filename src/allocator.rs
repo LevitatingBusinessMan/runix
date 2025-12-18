@@ -21,19 +21,60 @@ use crate::{HHDM_REQUEST, limine::{MemMapEntry, MemMapType}};
  * https://anastas.io/osdev/memory/2016/08/08/page-frame-allocator.html
  */
 
-// struct Allocator {
-//     current_frame: 
-// }
+#[derive(Debug)]
+struct Allocator {
+    current_frame: u64, 
+    depth: usize,
+}
 
-// impl GlobalAlloc for Allocator {
-//     unsafe fn alloc(&self, layout: core::alloc::Layout) -> *mut u8 {
-//         todo!()
-//     }
+struct LockedAllocator {
+    inner: Mutex<Allocator>,
+}
 
-//     unsafe fn dealloc(&self, core::ptr: *mut u8, layout: core::alloc::Layout) {
-//         todo!()
-//     }
-// }
+impl LockedAllocator {
+    pub const fn new() -> Self {
+        Self { inner: Mutex::new(Allocator {
+            current_frame: 0,
+            depth: 0,
+        }) }
+    }
+}
+
+unsafe impl GlobalAlloc for LockedAllocator {
+    unsafe fn alloc(&self, layout: core::alloc::Layout) -> *mut u8 {
+        let mut allocator = self.inner.lock();
+        
+        // initialize if necessary
+        if allocator.current_frame == 0 {
+            allocator.current_frame = allocate_frame();
+        }
+        
+        if layout.size() > 4096 {
+            panic!("cannot allocate more than a pagesize");
+        }
+        
+        let addr = (allocator.current_frame as usize + allocator.depth).next_multiple_of(layout.align());
+        
+        println!("{:x?} {:?} results in addr {:x?}", allocator, layout, addr);
+        
+        if addr > allocator.current_frame as usize + 4096 {
+            allocator.current_frame = allocate_frame();
+            allocator.depth = 0;
+            println!("alloc returns {:x?}", allocator.current_frame);
+            return allocator.current_frame as *mut u8;
+        } else {
+            allocator.depth = addr - allocator.current_frame as usize + layout.size();
+            return addr as *mut u8;
+        }
+    }
+
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: core::alloc::Layout) {
+        
+    }
+}
+
+#[global_allocator]
+static ALLOCATOR: LockedAllocator = LockedAllocator::new();
 
  /// simply grab a frame, no deallocation possible
 pub fn allocate_frame() -> u64 {

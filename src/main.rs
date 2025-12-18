@@ -7,7 +7,8 @@
 #![feature(ptr_as_ref_unchecked)]
 #![feature(cstr_display)]
 #![feature(exact_div)]
-
+ #![feature(alloc_layout_extra)]
+ 
 #[macro_use]
 pub mod print;
 mod panic;
@@ -28,6 +29,7 @@ mod limine;
 mod gfx;
 mod qemu;
 mod allocator;
+extern crate alloc;
 
 use core::ptr::addr_of;
 
