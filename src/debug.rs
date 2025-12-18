@@ -1,6 +1,57 @@
 //! debug helpers and printers
 use core::slice;
 
+use crate::limine::MemMapType;
+
+pub mod byte_unit {
+    //! https://physics.nist.gov/cuu/Units/binary.html
+
+    pub enum Unit {
+        Byte,
+        KiB,
+        MiB,
+        GiB,
+    }
+
+    pub struct UnitValue {
+        pub value: u128,
+        pub unit: Unit,
+    }
+    
+    impl Display for UnitValue {
+        fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+            let unit = match self.unit {
+                Unit::Byte => "B",
+                Unit::KiB => "KiB",
+                Unit::MiB => "MiB",
+                Unit::GiB => "GiB",
+            };
+            write!(f, "{}{}", self.value, unit)
+        }
+    }
+    
+    use core::fmt::{Debug, Display};
+    
+    /// how many digits as base 10
+    fn digit_count(n: u128) -> usize {
+        if n == 0 { return 1; }
+        (n.ilog10() + 1) as usize
+    }
+    
+    pub fn to_unit(b: u128) -> UnitValue {
+        if let Some(gib) = b.div_exact(2u128.pow(30)) {
+            UnitValue { value: gib,  unit: Unit::GiB }
+        } else if let Some(mib) = b.div_exact(2u128.pow(20)) {
+            UnitValue { value: mib,  unit: Unit::MiB }
+        } else if let Some(kib) = b.div_exact(2u128.pow(10)) {
+            UnitValue { value: kib,  unit: Unit::KiB }
+        } else {
+            UnitValue { value: b,  unit: Unit::Byte }
+        }
+    }
+}
+
+
 pub fn dump(addr: *const i8, len: usize) {
     let longs = unsafe { slice::from_raw_parts(addr, len * 8) };
     for ls in longs.chunks_exact(8) {
@@ -31,10 +82,15 @@ pub fn dump(addr: *const i8, len: usize) {
 //     }
 // }
 
-
 pub fn print_limine_memory_map() {
+    println!("{:>16} {:>16} {:<12} {}", "START", "END", "SIZE", "TYPE"); 
     for entry in crate::MEMMAP_REQUEST.response().unwrap().entries() {
-        println!("{:x?}", entry);
+        println!("{:>16x?} {:>16x?} {:<12x?} {:?}", 
+            entry.base, 
+            (entry.base + entry.length), 
+            entry.length,
+            entry.r#type
+        );
     }
 }
 

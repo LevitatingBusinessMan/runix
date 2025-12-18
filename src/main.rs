@@ -6,6 +6,7 @@
 #![feature(ascii_char)]
 #![feature(ptr_as_ref_unchecked)]
 #![feature(cstr_display)]
+#![feature(exact_div)]
 
 #[macro_use]
 pub mod print;
@@ -26,6 +27,9 @@ mod console;
 mod limine;
 mod gfx;
 mod qemu;
+mod allocator;
+
+use core::ptr::addr_of;
 
 pub use interrupts::keyboard;
 
@@ -61,7 +65,10 @@ static LIMINE_REQUESTS_START_MARKER: limine::RequestsStartMarker = limine::Reque
 #[link_section = ".requests_end_marker"]
 static LIMINE_REQUESTS_END_MARKER: limine::RequestsEndMarker = limine::RequestsEndMarker::new();
 
-
+extern "C" {
+    /// address of the end of the kernel
+    static kernel_end: u8;
+}
 // #[used]
 // #[unsafe(link_section = ".requests_start_marker")]
 // static _LIMINE_REQUESTS_START_MARKER: RequestsStartMarker = RequestsStartMarker::new();
@@ -80,7 +87,7 @@ unsafe extern "C" fn runix() -> ! {
         
     println!("Welcome to Runix");
     println!("Booted via {} {}", bootloader_info.name().display(), bootloader_info.version().display());
-        
+ 
     kdebug::kdebug();
     
 }

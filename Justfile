@@ -24,6 +24,7 @@ clean:
   rm -rf target
   rm -rf esp
 
+go: esp run
 
 # QEMU
 # disk images may be run with -drive format=raw,file=runix.img

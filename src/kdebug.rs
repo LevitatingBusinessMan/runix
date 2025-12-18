@@ -82,14 +82,15 @@ fn handle_cmd(cmd: &[u8]) {
             debug::print_limine_memory_map();
         },
         b"usable" => {
-            println!("{:>16} {:>16} {}", "START", "END", "SIZE of usable memory regions"); 
+            println!("{:>16} {:>16} {:<16} {}", "START", "END", "SIZE", "AS UNIT"); 
             for entry in crate::MEMMAP_REQUEST.response().unwrap().entries() {
                 if matches!(entry.r#type, MemMapType::Usable) {
-                    println!("{:>16x?} {:>16x?} {:x?}", entry.base, (entry.base + entry.length), entry.length)
+                    println!("{:>16x?} {:>16x?} {:<16x?} {}", entry.base, (entry.base + entry.length), entry.length, debug::byte_unit::to_unit(entry.length as u128))
                 }
             }
         },
         b"executable" => {
+            println!("kernel_end symbol at {:?}", addr_of!(crate::kernel_end));
             println!("{:x?}", crate::EXECUTABLE_ADDRESS_REQUEST.response().unwrap());  
         },
         b"hhdm" => {
@@ -97,6 +98,11 @@ fn handle_cmd(cmd: &[u8]) {
         },
         b"hbreak" => {
             hbreak!();
+        },
+        b"foo" => {
+            for entry in crate::MEMMAP_REQUEST.response().unwrap().entries() {
+                println!("{:?}", addr_of!(*entry));
+            }
         },
         b"clear" => {
             print::CONSOLE.lock().as_mut().unwrap().clear();

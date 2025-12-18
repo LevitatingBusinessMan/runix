@@ -9,3 +9,4 @@ x86_64 = "0.14"
 bit_field = "0.10.2"
 num_enum = { version = "0.7.0", default-features = false }
 bytemuck = "1.24.0"
+byte-unit = { version = "5.2.0", default-features = false }

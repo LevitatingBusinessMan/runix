@@ -200,7 +200,7 @@ impl MemMapRequest {
 }
 
 impl MemMapResponse {
-    pub fn entries(&self) -> &[&'static MemMapEntry] {
+    pub fn entries(&self) -> &'static [&'static MemMapEntry] {
         unsafe { slice::from_raw_parts(transmute(self.entries), self.entry_count as usize) }
     }
 }
