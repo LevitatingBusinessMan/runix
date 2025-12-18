@@ -71,13 +71,6 @@ extern "C" {
     /// address of the end of the kernel
     static kernel_end: u8;
 }
-// #[used]
-// #[unsafe(link_section = ".requests_start_marker")]
-// static _LIMINE_REQUESTS_START_MARKER: RequestsStartMarker = RequestsStartMarker::new();
-
-// #[used]
-// #[unsafe(link_section = ".requests_end_marker")]
-// static _LIMINE_REQUESTS_END_MARKER: RequestsEndMarker = RequestsEndMarker::new();
 
 #[unsafe(no_mangle)]
 unsafe extern "C" fn runix() -> ! {
