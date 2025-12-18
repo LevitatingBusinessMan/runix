@@ -49,6 +49,9 @@ unsafe impl GlobalAlloc for LockedAllocator {
             allocator.current_frame = allocate_frame();
         }
         
+        // currently this is a bit of a stupid design where
+        // allocations may not cross frame boundaries
+        
         if layout.size() > 4096 {
             panic!("cannot allocate more than a pagesize");
         }
