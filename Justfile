@@ -37,6 +37,14 @@ run:
     -debugcon stdio \
     -m 256M
 
+monitor:
+    qemu-system-x86_64 \
+    -bios /usr/share/qemu/ovmf-x86_64.bin \
+    -drive format=raw,file=fat:rw:target/esp \
+    -no-shutdown -no-reboot \
+    -monitor stdio \
+    -m 256M
+
 debug:
   qemu-system-x86_64 \
     -bios /usr/share/qemu/ovmf-x86_64.bin \

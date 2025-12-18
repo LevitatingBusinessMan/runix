@@ -87,7 +87,7 @@ unsafe extern "C" fn runix() -> ! {
         
     println!("Welcome to Runix");
     println!("Booted via {} {}", bootloader_info.name().display(), bootloader_info.version().display());
- 
+    
     kdebug::kdebug();
     
 }

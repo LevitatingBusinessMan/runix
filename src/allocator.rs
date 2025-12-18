@@ -1,9 +1,9 @@
-use core::{ptr::addr_of, sync::atomic::{AtomicU64}};
+use core::{alloc::GlobalAlloc, ptr::addr_of, sync::atomic::AtomicU64};
 
 use spin::{Lazy, mutex::Mutex};
 use x86_64::{PhysAddr, VirtAddr};
 
-use crate::limine::{MemMapEntry, MemMapType};
+use crate::{HHDM_REQUEST, limine::{MemMapEntry, MemMapType}};
 
 /**
  * NOTES
@@ -21,7 +21,21 @@ use crate::limine::{MemMapEntry, MemMapType};
  * https://anastas.io/osdev/memory/2016/08/08/page-frame-allocator.html
  */
 
+// struct Allocator {
+//     current_frame: 
+// }
 
+// impl GlobalAlloc for Allocator {
+//     unsafe fn alloc(&self, layout: core::alloc::Layout) -> *mut u8 {
+//         todo!()
+//     }
+
+//     unsafe fn dealloc(&self, core::ptr: *mut u8, layout: core::alloc::Layout) {
+//         todo!()
+//     }
+// }
+
+ /// simply grab a frame, no deallocation possible
 pub fn allocate_frame() -> u64 {
     struct FrameIter {
         areas: &'static[&'static MemMapEntry],
@@ -65,5 +79,8 @@ pub fn allocate_frame() -> u64 {
         })
     });
     
-    FRAME_ITER.lock().next().unwrap()
+    /// add this to physical frames
+    static OFFSET: Lazy<u64> = Lazy::new(|| HHDM_REQUEST.response().unwrap().offset);
+    
+    FRAME_ITER.lock().next().unwrap() + *OFFSET
 }
