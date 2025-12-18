@@ -54,13 +54,10 @@ unsafe impl GlobalAlloc for LockedAllocator {
         }
         
         let addr = (allocator.current_frame as usize + allocator.depth).next_multiple_of(layout.align());
-        
-        println!("{:x?} {:?} results in addr {:x?}", allocator, layout, addr);
-        
-        if addr > allocator.current_frame as usize + 4096 {
+                
+        if addr + layout.size() > allocator.current_frame as usize + 4096 {
             allocator.current_frame = allocate_frame();
             allocator.depth = 0;
-            println!("alloc returns {:x?}", allocator.current_frame);
             return allocator.current_frame as *mut u8;
         } else {
             allocator.depth = addr - allocator.current_frame as usize + layout.size();
@@ -69,7 +66,7 @@ unsafe impl GlobalAlloc for LockedAllocator {
     }
 
     unsafe fn dealloc(&self, ptr: *mut u8, layout: core::alloc::Layout) {
-        
+        println!("leaking some {} bytes", layout.size())
     }
 }
 

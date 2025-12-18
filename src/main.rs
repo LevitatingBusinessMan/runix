@@ -31,7 +31,7 @@ mod qemu;
 mod allocator;
 extern crate alloc;
 
-use core::ptr::addr_of;
+use core::alloc::Layout;
 
 pub use interrupts::keyboard;
 
@@ -83,6 +83,13 @@ unsafe extern "C" fn runix() -> ! {
     println!("Welcome to Runix");
     println!("Booted via {} {}", bootloader_info.name().display(), bootloader_info.version().display());
     
+    {
+        let _ = alloc::boxed::Box::new(0xdeadbeefu64);
+    }
+
+    let _ = alloc::alloc::alloc(Layout::from_size_align(4096, 8).unwrap());
+    //alloc::alloc::alloc(Layout::from_size_align(4097, 8).unwrap()); // panic
+
     kdebug::kdebug();
     
 }
