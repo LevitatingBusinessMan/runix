@@ -1,0 +1,7 @@
+= Runix
+
+Runix is a WIP kernel written in Rust.
+
+Previously Runix was a project loosely following the first edition of https://os.phil-opp.com/edition-1/[Phil Opp's blog]. It used GRUB for booting via multiboot2 on bios. You can find this version in this codebase at the https://git.levitati.ng/LevitatingBusinessMan/runix/src/tag/bios-multiboot2[bios-multiboot2 tag]. This includes an assembly entry capable capable of initializing a tiny page table with a stack guard, as well as a module for reading multiboot2 tags.
+
+Runix is an acronym for: *Ru* nix has *n* othing to do with un *ix*.
