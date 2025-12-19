@@ -82,10 +82,10 @@ fn handle_cmd(cmd: &[u8]) {
             debug::print_limine_memory_map();
         },
         b"usable" => {
-            println!("{:>16} {:>16} {:<16} {}", "START", "END", "SIZE", "AS UNIT"); 
+            println!("{:>16} {:>16} {:<12} {}", "START", "END", "SIZE", "AS UNIT"); 
             for entry in crate::MEMMAP_REQUEST.response().unwrap().entries() {
                 if matches!(entry.r#type, MemMapType::Usable) {
-                    println!("{:>16x?} {:>16x?} {:<16x?} {}", entry.base, (entry.base + entry.length), entry.length, debug::byte_unit::to_unit(entry.length as u128))
+                    println!("{:>16x?} {:>16x?} {:<12?} {}", entry.base, (entry.base + entry.length), entry.length, debug::byte_unit::to_unit(entry.length as u128))
                 }
             }
         },

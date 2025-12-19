@@ -3,6 +3,12 @@ use x86_64::instructions::port::PortWrite;
 
 pub struct QemuDebug();
 
+macro_rules! qemu {
+    () => {
+        
+    };
+}
+
 impl fmt::Write for QemuDebug {
     fn write_str(&mut self, s: &str) -> fmt::Result {
         // for c in s.chars() {

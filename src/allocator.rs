@@ -69,7 +69,7 @@ unsafe impl GlobalAlloc for LockedAllocator {
     }
 
     unsafe fn dealloc(&self, ptr: *mut u8, layout: core::alloc::Layout) {
-        println!("leaking some {} bytes", layout.size())
+        //println!("leaking some {} bytes", layout.size())
     }
 }
 

@@ -26,11 +26,14 @@ pub mod byte_unit {
                 Unit::MiB => "MiB",
                 Unit::GiB => "GiB",
             };
-            write!(f, "{}{}", self.value, unit)
+            // WARNING this allocates
+            f.pad(&alloc::format!("{}{}", self.value, unit))
         }
     }
     
     use core::fmt::{Debug, Display};
+
+    use alloc::format;
     
     /// how many digits as base 10
     fn digit_count(n: u128) -> usize {
@@ -83,12 +86,13 @@ pub fn dump(addr: *const i8, len: usize) {
 // }
 
 pub fn print_limine_memory_map() {
-    println!("{:>16} {:>16} {:<12} {}", "START", "END", "SIZE", "TYPE"); 
+    println!("{:>16} {:>16} {:<12} {:<8} {}", "START", "END", "SIZE", "AS UNIT", "TYPE"); 
     for entry in crate::MEMMAP_REQUEST.response().unwrap().entries() {
-        println!("{:>16x?} {:>16x?} {:<12x?} {:?}", 
+        println!("{:>16x?} {:>16x?} {:<12x?} {:<8} {:?}", 
             entry.base, 
             (entry.base + entry.length), 
             entry.length,
+            byte_unit::to_unit(entry.length as u128),
             entry.r#type
         );
     }
